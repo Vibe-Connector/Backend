@@ -1,3 +1,4 @@
+### Gradle ###
 HELP.md
 .gradle
 build/
@@ -18,13 +19,17 @@ bin/
 !**/src/test/**/bin/
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+
+### Eclipse ###
+.metadata
+*.swp
 
 ### NetBeans ###
 /nbproject/private/
@@ -38,3 +43,22 @@ out/
 
 .properties
 application.properties
+### macOS ###
+.DS_Store
+Thumbs.db
+
+### Logs ###
+*.log
+logs/
+
+### Application secrets ###
+src/main/resources/application-local.yml
+src/main/resources/application-prod.yml
+
+### Environment ###
+.env
+.env.*
+!.env.example
+
+### Docker ###
+docker-compose.override.yml
