@@ -41,6 +41,7 @@ out/
 ### VS Code ###
 .vscode/
 
+gradle.properties
 .properties
 application.properties
 ### macOS ###
