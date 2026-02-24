@@ -19,24 +19,24 @@ public class OptionService {
     private final CompanionOptionRepository companionOptionRepository;
 
     public OptionResponse getAllOptions() {
-        var moods = moodKeywordRepository.findByIsActiveTrueOrderBySortOrder().stream()
-                .map(m -> new MoodDto(m.getKeywordId(), m.getKeywordKey(), m.getKeywordText(), m.getCategory()))
+        var moods = moodKeywordRepository.findAllByOrderByKeywordId().stream()
+                .map(m -> new MoodDto(m.getKeywordId(), m.getKeywordValue(), m.getCategory()))
                 .toList();
 
-        var times = timeOptionRepository.findByIsActiveTrueOrderBySortOrder().stream()
-                .map(t -> new TimeDto(t.getTimeId(), t.getTimeKey(), t.getTimeText()))
+        var times = timeOptionRepository.findByIsActiveTrueOrderByTimeId().stream()
+                .map(t -> new TimeDto(t.getTimeId(), t.getTimeKey(), t.getTimeValue().toString(), t.getPeriod()))
                 .toList();
 
-        var weathers = weatherOptionRepository.findByIsActiveTrueOrderBySortOrder().stream()
-                .map(w -> new WeatherDto(w.getWeatherId(), w.getWeatherKey(), w.getWeatherText(), w.getIcon()))
+        var weathers = weatherOptionRepository.findByIsActiveTrueOrderByWeatherId().stream()
+                .map(w -> new WeatherDto(w.getWeatherId(), w.getWeatherKey()))
                 .toList();
 
-        var places = placeOptionRepository.findByIsActiveTrueOrderBySortOrder().stream()
-                .map(p -> new PlaceDto(p.getPlaceId(), p.getPlaceKey(), p.getPlaceText(), p.getIcon()))
+        var places = placeOptionRepository.findByIsActiveTrueOrderByPlaceId().stream()
+                .map(p -> new PlaceDto(p.getPlaceId(), p.getPlaceKey()))
                 .toList();
 
-        var companions = companionOptionRepository.findByIsActiveTrueOrderBySortOrder().stream()
-                .map(c -> new CompanionDto(c.getCompanionId(), c.getCompanionKey(), c.getCompanionText(), c.getIcon()))
+        var companions = companionOptionRepository.findByIsActiveTrueOrderByCompanionId().stream()
+                .map(c -> new CompanionDto(c.getCompanionId(), c.getCompanionKey()))
                 .toList();
 
         return new OptionResponse(moods, times, weathers, places, companions);

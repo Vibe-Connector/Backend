@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalTime;
+
 @Entity
 @Table(name = "time_options")
 @Getter
@@ -19,11 +21,11 @@ public class TimeOption {
     @Column(name = "time_key", nullable = false, unique = true, length = 50)
     private String timeKey;
 
-    @Column(name = "time_text", nullable = false, length = 100)
-    private String timeText;
+    @Column(name = "time_value", nullable = false)
+    private LocalTime timeValue;
 
-    @Column(name = "sort_order")
-    private Integer sortOrder;
+    @Column(name = "period", nullable = false, length = 2)
+    private String period;
 
     @Column(name = "is_active")
     private Boolean isActive;

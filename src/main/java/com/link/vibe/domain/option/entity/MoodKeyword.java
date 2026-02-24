@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "mood_keywords")
 @Getter
@@ -16,18 +18,12 @@ public class MoodKeyword {
     @Column(name = "keyword_id")
     private Long keywordId;
 
-    @Column(name = "keyword_key", nullable = false, unique = true, length = 50)
-    private String keywordKey;
+    @Column(name = "keyword_value", nullable = false, unique = true, length = 50)
+    private String keywordValue;
 
-    @Column(name = "keyword_text", nullable = false, length = 100)
-    private String keywordText;
-
-    @Column(name = "category", nullable = false, length = 20)
+    @Column(name = "category", nullable = false, length = 50)
     private String category;
 
-    @Column(name = "sort_order")
-    private Integer sortOrder;
-
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }

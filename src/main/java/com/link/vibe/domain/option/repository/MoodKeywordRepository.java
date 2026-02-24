@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface MoodKeywordRepository extends JpaRepository<MoodKeyword, Long> {
-    List<MoodKeyword> findByIsActiveTrueOrderBySortOrder();
+    List<MoodKeyword> findAllByOrderByKeywordId();
 }

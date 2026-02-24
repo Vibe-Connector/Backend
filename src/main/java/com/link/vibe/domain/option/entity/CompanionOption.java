@@ -19,15 +19,6 @@ public class CompanionOption {
     @Column(name = "companion_key", nullable = false, unique = true, length = 50)
     private String companionKey;
 
-    @Column(name = "companion_text", nullable = false, length = 100)
-    private String companionText;
-
-    @Column(name = "icon", length = 50)
-    private String icon;
-
-    @Column(name = "sort_order")
-    private Integer sortOrder;
-
     @Column(name = "is_active")
     private Boolean isActive;
 }
