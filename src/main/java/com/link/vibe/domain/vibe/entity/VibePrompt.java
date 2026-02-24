@@ -6,24 +6,29 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "vibe_requests")
+@Table(name = "vibe_prompts")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class VibeRequest {
+public class VibePrompt {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "vibe_id")
-    private Long vibeId;
+    @Column(name = "prompt_id")
+    private Long promptId;
 
-    @Column(name = "session_id", nullable = false, length = 36)
-    private String sessionId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id", nullable = false, unique = true)
+    private VibeSession vibeSession;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "mood_keyword_ids", columnDefinition = "jsonb")
+    private String moodKeywordIds;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "time_id")
@@ -44,29 +49,21 @@ public class VibeRequest {
     @Column(name = "final_prompt", columnDefinition = "TEXT")
     private String finalPrompt;
 
-    @Column(name = "result_phrase", columnDefinition = "TEXT")
-    private String resultPhrase;
-
-    @Column(name = "result_analysis", columnDefinition = "TEXT")
-    private String resultAnalysis;
-
-    @Column(name = "processing_time_ms")
-    private Integer processingTimeMs;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "vibeRequest", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<VibeRequestMood> moods = new ArrayList<>();
-
     @Builder
-    public VibeRequest(String sessionId, TimeOption timeOption, WeatherOption weatherOption,
-                       PlaceOption placeOption, CompanionOption companionOption) {
-        this.sessionId = sessionId;
+    public VibePrompt(VibeSession vibeSession, String moodKeywordIds,
+                      TimeOption timeOption, WeatherOption weatherOption,
+                      PlaceOption placeOption, CompanionOption companionOption,
+                      String finalPrompt) {
+        this.vibeSession = vibeSession;
+        this.moodKeywordIds = moodKeywordIds;
         this.timeOption = timeOption;
         this.weatherOption = weatherOption;
         this.placeOption = placeOption;
         this.companionOption = companionOption;
+        this.finalPrompt = finalPrompt;
     }
 
     @PrePersist
@@ -74,15 +71,7 @@ public class VibeRequest {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void addMood(VibeRequestMood mood) {
-        this.moods.add(mood);
-        mood.setVibeRequest(this);
-    }
-
-    public void applyResult(String finalPrompt, String resultPhrase, String resultAnalysis, int processingTimeMs) {
+    public void updateFinalPrompt(String finalPrompt) {
         this.finalPrompt = finalPrompt;
-        this.resultPhrase = resultPhrase;
-        this.resultAnalysis = resultAnalysis;
-        this.processingTimeMs = processingTimeMs;
     }
 }
