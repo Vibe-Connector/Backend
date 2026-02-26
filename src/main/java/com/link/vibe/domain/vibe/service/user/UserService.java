@@ -1,6 +1,7 @@
 package com.link.vibe.domain.vibe.service.user;
 
 import com.link.vibe.domain.user.dto.ProfileImageResponse;
+import com.link.vibe.domain.user.dto.PublicUserProfileResponse;
 import com.link.vibe.domain.user.dto.UpdateProfileRequest;
 import com.link.vibe.domain.user.dto.UserProfileResponse;
 import com.link.vibe.domain.user.entity.User;
@@ -25,6 +26,13 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         return UserProfileResponse.from(user);
+    }
+
+    @Transactional(readOnly = true)
+    public PublicUserProfileResponse getUserProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return PublicUserProfileResponse.from(user);
     }
 
     @Transactional
