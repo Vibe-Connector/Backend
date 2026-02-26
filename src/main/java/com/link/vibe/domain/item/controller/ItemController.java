@@ -1,6 +1,7 @@
 package com.link.vibe.domain.item.controller;
 
 import com.link.vibe.domain.item.dto.MovieDetailResponse;
+import com.link.vibe.domain.item.dto.MusicDetailResponse;
 import com.link.vibe.domain.item.service.ItemService;
 import com.link.vibe.global.common.ApiResponse;
 import com.link.vibe.global.i18n.LanguageContext;
@@ -26,5 +27,13 @@ public class ItemController {
             @PathVariable Long itemId) {
         Long languageId = LanguageContext.getLanguageId();
         return ApiResponse.ok(itemService.getMovieDetail(itemId, languageId));
+    }
+
+    @Operation(summary = "음악 상세 조회", description = "아이템 공통 정보 + 음악 도메인 상세")
+    @GetMapping("/{itemId}/music")
+    public ApiResponse<MusicDetailResponse> getMusicDetail(
+            @PathVariable Long itemId) {
+        Long languageId = LanguageContext.getLanguageId();
+        return ApiResponse.ok(itemService.getMusicDetail(itemId, languageId));
     }
 }
