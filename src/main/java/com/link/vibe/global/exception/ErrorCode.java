@@ -55,6 +55,11 @@ public enum ErrorCode {
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "FILE_002", "파일 크기가 제한(5MB)을 초과했습니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "FILE_003", "지원하지 않는 파일 형식입니다. (JPEG, PNG, GIF, WebP만 허용)"),
 
+    // 팔로우 (FOLLOW)
+    FOLLOW_ALREADY_EXISTS(HttpStatus.CONFLICT, "FOLLOW_001", "이미 팔로우한 사용자입니다."),
+    FOLLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "FOLLOW_002", "팔로우 관계를 찾을 수 없습니다."),
+    FOLLOW_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "FOLLOW_003", "자기 자신을 팔로우할 수 없습니다."),
+
     // 언어 (LANG)
     LANGUAGE_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "LANG_001", "지원하지 않는 언어입니다.");
 
