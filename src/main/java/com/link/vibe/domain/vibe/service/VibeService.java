@@ -14,9 +14,9 @@ import com.link.vibe.domain.vibe.repository.VibePromptRepository;
 import com.link.vibe.domain.vibe.repository.VibeResultRepository;
 import com.link.vibe.domain.vibe.repository.VibeSessionRepository;
 import com.link.vibe.global.exception.BusinessException;
+import com.link.vibe.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,17 +49,17 @@ public class VibeService {
         // 옵션 검증
         List<MoodKeyword> moodKeywords = moodKeywordRepository.findAllById(request.moodKeywordIds());
         if (moodKeywords.size() != request.moodKeywordIds().size()) {
-            throw new BusinessException("유효하지 않은 기분 키워드 ID가 포함되어 있습니다.", HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.VIBE_INVALID_KEYWORD);
         }
 
         TimeOption timeOption = timeOptionRepository.findById(request.timeId())
-                .orElseThrow(() -> new BusinessException("유효하지 않은 시간 옵션입니다.", HttpStatus.BAD_REQUEST));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "유효하지 않은 시간 옵션입니다."));
         WeatherOption weatherOption = weatherOptionRepository.findById(request.weatherId())
-                .orElseThrow(() -> new BusinessException("유효하지 않은 날씨 옵션입니다.", HttpStatus.BAD_REQUEST));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "유효하지 않은 날씨 옵션입니다."));
         PlaceOption placeOption = placeOptionRepository.findById(request.placeId())
-                .orElseThrow(() -> new BusinessException("유효하지 않은 공간 옵션입니다.", HttpStatus.BAD_REQUEST));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "유효하지 않은 공간 옵션입니다."));
         CompanionOption companionOption = companionOptionRepository.findById(request.companionId())
-                .orElseThrow(() -> new BusinessException("유효하지 않은 동반자 옵션입니다.", HttpStatus.BAD_REQUEST));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "유효하지 않은 동반자 옵션입니다."));
 
         // 1. 세션 생성
         VibeSession session = VibeSession.builder().userId(DEFAULT_USER_ID).build();
@@ -136,10 +136,10 @@ public class VibeService {
 
     public VibeResultResponse getVibeDetail(Long sessionId) {
         VibeSession session = vibeSessionRepository.findByIdWithDetails(sessionId)
-                .orElseThrow(() -> new BusinessException("해당 Vibe 세션을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.VIBE_SESSION_NOT_FOUND));
 
         if (session.getVibeResult() == null) {
-            throw new BusinessException("해당 세션의 결과가 아직 생성되지 않았습니다.", HttpStatus.NOT_FOUND);
+            throw new BusinessException(ErrorCode.VIBE_RESULT_NOT_FOUND);
         }
 
         return toResultResponse(session);
@@ -195,7 +195,7 @@ public class VibeService {
         try {
             return objectMapper.writeValueAsString(ids);
         } catch (JsonProcessingException e) {
-            throw new BusinessException("JSON 변환 실패", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "JSON 변환 실패");
         }
     }
 
