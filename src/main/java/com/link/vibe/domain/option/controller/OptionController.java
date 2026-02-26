@@ -1,6 +1,7 @@
 package com.link.vibe.domain.option.controller;
 
 import com.link.vibe.domain.option.dto.OptionResponse;
+import com.link.vibe.domain.option.dto.OptionResponse.MoodDto;
 import com.link.vibe.domain.option.service.OptionService;
 import com.link.vibe.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(name = "Option", description = "Vibe 선택지 조회 API — i18n 지원")
 @RestController
@@ -46,5 +49,25 @@ public class OptionController {
             @Parameter(description = "언어 코드 (ko, en 등)", example = "ko")
             @RequestParam(defaultValue = "ko") String lang) {
         return ApiResponse.ok(optionService.getAllOptions(lang));
+    }
+
+    @Operation(
+            summary = "무드 키워드 조회 (카테고리별 필터링)",
+            description = """
+                    무드 키워드를 조회합니다. category 파라미터로 카테고리별 필터링이 가능합니다.
+
+                    **파라미터:**
+                    - `lang`: 언어 코드 (기본값 `ko`)
+                    - `category` (선택): 카테고리 필터 (예: `감정`, `분위기`, `에너지`, `색감`)
+                      - 미지정 시 전체 키워드 반환
+                    """
+    )
+    @GetMapping("/moods")
+    public ApiResponse<List<MoodDto>> getMoodKeywords(
+            @Parameter(description = "언어 코드", example = "ko")
+            @RequestParam(defaultValue = "ko") String lang,
+            @Parameter(description = "카테고리 필터", example = "감정")
+            @RequestParam(required = false) String category) {
+        return ApiResponse.ok(optionService.getMoodKeywords(lang, category));
     }
 }
