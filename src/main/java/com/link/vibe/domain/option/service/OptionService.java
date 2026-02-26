@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -84,6 +85,26 @@ public class OptionService {
                 .toList();
 
         return new OptionResponse(moods, times, weathers, places, companions);
+    }
+
+    public List<MoodDto> getMoodKeywords(String lang, String category) {
+        Long languageId = resolveLanguageId(lang);
+
+        Map<Long, String> moodLabels = moodTranslationRepository.findByLanguageId(languageId).stream()
+                .collect(Collectors.toMap(t -> t.getKeywordId(), t -> t.getKeywordValue()));
+
+        var keywords = (category != null && !category.isBlank())
+                ? moodKeywordRepository.findByCategoryOrderByKeywordId(category)
+                : moodKeywordRepository.findAllByOrderByKeywordId();
+
+        return keywords.stream()
+                .map(m -> new MoodDto(
+                        m.getKeywordId(),
+                        m.getKeywordValue(),
+                        m.getCategory(),
+                        moodLabels.getOrDefault(m.getKeywordId(), m.getKeywordValue())
+                ))
+                .toList();
     }
 
     private Long resolveLanguageId(String lang) {
