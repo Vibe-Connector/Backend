@@ -48,6 +48,8 @@ public class SecurityConfig {
                         // 피드 조회 — Public
                         .requestMatchers(HttpMethod.GET, "/api/v1/feeds/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/feeds/*/comments").permitAll()
+                        // 사용자 피드 목록 — Public
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/feeds").permitAll()
                         // 탐색 — Public
                         .requestMatchers(HttpMethod.GET, "/api/v1/explore/**").permitAll()
                         // Swagger UI — Public
