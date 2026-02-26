@@ -11,8 +11,10 @@ import com.link.vibe.domain.auth.oauth.OAuthClientFactory;
 import com.link.vibe.domain.auth.oauth.OAuthUserInfo;
 import com.link.vibe.domain.user.entity.SocialAccount;
 import com.link.vibe.domain.user.entity.User;
+import com.link.vibe.domain.user.entity.UserSettings;
 import com.link.vibe.domain.user.repository.SocialAccountRepository;
 import com.link.vibe.domain.user.repository.UserRepository;
+import com.link.vibe.domain.user.repository.UserSettingsRepository;
 import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
 import com.link.vibe.global.security.JwtTokenProvider;
@@ -30,6 +32,7 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserSettingsRepository userSettingsRepository;
     private final SocialAccountRepository socialAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -53,6 +56,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        userSettingsRepository.save(UserSettings.builder().user(savedUser).build());
 
         String accessToken = jwtTokenProvider.createAccessToken(savedUser.getUserId(), savedUser.getEmail());
         String refreshToken = jwtTokenProvider.createRefreshToken(savedUser.getUserId(), savedUser.getEmail());
@@ -166,6 +170,7 @@ public class AuthService {
 
         if (isNewUser) {
             // 3a. 신규 — 이메일로 기존 유저 조회 또는 신규 생성
+            boolean[] createdNewUser = {false};
             user = userRepository.findByEmail(userInfo.getEmail())
                     .orElseGet(() -> {
                         String nickname = generateUniqueNickname(userInfo.getName());
@@ -175,8 +180,14 @@ public class AuthService {
                                 .nickname(nickname)
                                 .profileImageUrl(userInfo.getProfileImageUrl())
                                 .build();
-                        return userRepository.save(newUser);
+                        User saved = userRepository.save(newUser);
+                        createdNewUser[0] = true;
+                        return saved;
                     });
+
+            if (createdNewUser[0]) {
+                userSettingsRepository.save(UserSettings.builder().user(user).build());
+            }
 
             // 소셜 계정 연동
             LocalDateTime tokenExpiresAt = userInfo.getExpiresIn() != null
@@ -225,6 +236,11 @@ public class AuthService {
     @Transactional(readOnly = true)
     public boolean checkEmailAvailable(String email) {
         return !userRepository.existsByEmail(email);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkNicknameAvailable(String nickname) {
+        return !userRepository.existsByNickname(nickname);
     }
 
     private String generateUniqueNickname(String baseName) {

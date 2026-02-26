@@ -35,6 +35,15 @@ oauth:
     client-id: ${NAVER_CLIENT_ID:your-naver-client-id}
     client-secret: ${NAVER_CLIENT_SECRET:your-naver-client-secret}
 
+cloud:
+  aws:
+    s3:
+      bucket: ${AWS_S3_BUCKET:vibelink-uploads}
+      region: ${AWS_REGION:ap-northeast-2}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY:}
+      secret-key: ${AWS_SECRET_KEY:}
+
 openai:
   api-key: ${OPENAI_API_KEY}
   model: gpt-4o-mini
