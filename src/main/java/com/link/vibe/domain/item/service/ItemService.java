@@ -2,13 +2,16 @@ package com.link.vibe.domain.item.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.link.vibe.domain.item.dto.CoffeeDetailResponse;
 import com.link.vibe.domain.item.dto.LightingDetailResponse;
 import com.link.vibe.domain.item.dto.MovieDetailResponse;
 import com.link.vibe.domain.item.dto.MusicDetailResponse;
+import com.link.vibe.domain.item.entity.CoffeeDetail;
 import com.link.vibe.domain.item.entity.Item;
 import com.link.vibe.domain.item.entity.LightingDetail;
 import com.link.vibe.domain.item.entity.MovieDetail;
 import com.link.vibe.domain.item.entity.MusicDetail;
+import com.link.vibe.domain.item.repository.CoffeeDetailRepository;
 import com.link.vibe.domain.item.repository.ItemCategoryTranslationRepository;
 import com.link.vibe.domain.item.repository.ItemRepository;
 import com.link.vibe.domain.item.repository.ItemTranslationRepository;
@@ -37,6 +40,7 @@ public class ItemService {
     private final MovieDetailRepository movieDetailRepository;
     private final MusicDetailRepository musicDetailRepository;
     private final LightingDetailRepository lightingDetailRepository;
+    private final CoffeeDetailRepository coffeeDetailRepository;
     private final ObjectMapper objectMapper;
 
     public MovieDetailResponse getMovieDetail(Long itemId, Long languageId) {
@@ -135,6 +139,46 @@ public class ItemService {
         );
     }
 
+    public CoffeeDetailResponse getCoffeeDetail(Long itemId, Long languageId) {
+        Item item = findActiveItem(itemId);
+        CoffeeDetail detail = coffeeDetailRepository.findByItemId(itemId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ITEM_NOT_FOUND));
+
+        String itemName = getItemName(itemId, languageId);
+        String description = getItemDescription(itemId, languageId);
+        String categoryName = getCategoryName(item.getCategory().getCategoryId(), languageId);
+
+        return new CoffeeDetailResponse(
+                item.getItemId(),
+                itemName,
+                description,
+                item.getCategory().getCategoryKey(),
+                categoryName,
+                item.getBrand(),
+                item.getImageUrl(),
+                item.getExternalLink(),
+                item.getExternalService(),
+                detail.getCapsuleName(),
+                detail.getLine(),
+                detail.getSubCategory(),
+                detail.getIntensity(),
+                detail.getIntensityMax(),
+                parseJsonArray(detail.getCupSizes(), new TypeReference<>() {}),
+                detail.getBeanType(),
+                parseJsonArray(detail.getOrigins(), new TypeReference<>() {}),
+                detail.getRoastLevel(),
+                parseJson(detail.getAromaProfile(), new TypeReference<>() {}),
+                detail.getFlavorNotes(),
+                detail.getBody(),
+                detail.getBitterness(),
+                detail.getAcidity(),
+                detail.getRoasting(),
+                detail.getIsDecaf(),
+                detail.getIsLimitedEdition(),
+                detail.getPricePerCapsuleKrw()
+        );
+    }
+
     // ── private 헬퍼 ──
 
     private Item findActiveItem(Long itemId) {
@@ -168,6 +212,16 @@ public class ItemService {
                 .findByCategoryCategoryIdAndLanguageLanguageId(categoryId, languageId)
                 .map(t -> t.getCategoryValue())
                 .orElse(null);
+    }
+
+    private <T> T parseJson(String json, TypeReference<T> typeRef) {
+        if (json == null || json.isBlank()) return null;
+        try {
+            return objectMapper.readValue(json, typeRef);
+        } catch (Exception e) {
+            log.warn("JSON 파싱 실패: {}", e.getMessage());
+            return null;
+        }
     }
 
     private <T> List<T> parseJsonArray(String json, TypeReference<List<T>> typeRef) {
