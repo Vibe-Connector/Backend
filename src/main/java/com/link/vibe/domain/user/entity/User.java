@@ -59,11 +59,12 @@ public class User {
     private LocalDateTime deletedAt;
 
     @Builder
-    public User(String email, String password, String nickname, String name) {
+    public User(String email, String password, String nickname, String name, String profileImageUrl) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.name = name;
+        this.profileImageUrl = profileImageUrl;
         this.status = "ACTIVE";
     }
 

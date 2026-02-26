@@ -27,6 +27,14 @@ jwt:
   access-token-expiration: 1800000    # 30분
   refresh-token-expiration: 604800000 # 7일
 
+oauth:
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+    client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
+  naver:
+    client-id: ${NAVER_CLIENT_ID:your-naver-client-id}
+    client-secret: ${NAVER_CLIENT_SECRET:your-naver-client-secret}
+
 openai:
   api-key: ${OPENAI_API_KEY}
   model: gpt-4o-mini
