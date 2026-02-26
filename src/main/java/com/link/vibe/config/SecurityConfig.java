@@ -38,7 +38,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 인증 API — Public
+                        // 인증 API — Public (logout은 인증 필요)
+                        .requestMatchers("/api/v1/auth/logout").authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         // 옵션 조회 — Public
                         .requestMatchers(HttpMethod.GET, "/api/v1/options/**").permitAll()
