@@ -1,6 +1,7 @@
 package com.link.vibe.domain.user.controller;
 
 import com.link.vibe.domain.user.dto.ProfileImageResponse;
+import com.link.vibe.domain.user.dto.PublicUserProfileResponse;
 import com.link.vibe.domain.user.dto.UpdateProfileRequest;
 import com.link.vibe.domain.user.dto.UserProfileResponse;
 import com.link.vibe.domain.vibe.service.user.UserService;
@@ -34,6 +35,24 @@ public class UserController {
     public ApiResponse<UserProfileResponse> getMyProfile() {
         Long userId = SecurityUtil.getCurrentUserId();
         return ApiResponse.ok(userService.getMyProfile(userId));
+    }
+
+    @Operation(
+            summary = "다른 사용자 프로필 조회",
+            description = """
+                    userId로 다른 사용자의 공개 프로필을 조회합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    닉네임, 프로필 이미지 등 공개 정보만 반환됩니다.
+
+                    **에러:**
+                    - 404 (USER_001): 사용자를 찾을 수 없음
+                    """
+    )
+    @GetMapping("/{userId}")
+    public ApiResponse<PublicUserProfileResponse> getUserProfile(@PathVariable Long userId) {
+        return ApiResponse.ok(userService.getUserProfile(userId));
     }
 
     @Operation(
