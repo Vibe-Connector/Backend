@@ -2,6 +2,8 @@ package com.link.vibe.domain.auth.controller;
 
 import com.link.vibe.domain.auth.dto.LoginRequest;
 import com.link.vibe.domain.auth.dto.SignupRequest;
+import com.link.vibe.domain.auth.dto.SocialLoginRequest;
+import com.link.vibe.domain.auth.dto.SocialLoginResponse;
 import com.link.vibe.domain.auth.dto.TokenResponse;
 import com.link.vibe.domain.vibe.service.auth.AuthService;
 import com.link.vibe.global.common.ApiResponse;
@@ -9,10 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Auth", description = "인증 API — 회원가입, 로그인, 토큰 갱신, 로그아웃")
 @RestController
@@ -56,5 +55,33 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.ok(authService.login(request));
+    }
+
+    @Operation(
+            summary = "소셜 로그인",
+            description = """
+                    소셜 제공자(GOOGLE, NAVER)의 인가 코드로 로그인합니다.
+
+                    **흐름:**
+                    1. 프론트엔드에서 소셜 로그인 후 인가 코드(authorizationCode)를 받음
+                    2. 인가 코드와 redirectUri를 백엔드에 전달
+                    3. 백엔드가 소셜 제공자와 토큰 교환 → 사용자 정보 조회
+                    4. 신규 사용자면 자동 가입, 기존 사용자면 로그인 처리
+
+                    **isNewUser=true:** 프론트에서 닉네임 등 추가 정보 입력을 유도하세요.
+
+                    **지원 제공자:** GOOGLE, NAVER
+
+                    **에러:**
+                    - 401 (AUTH_005): 소셜 인증 실패 (잘못된 인가 코드 등)
+                    - 400 (AUTH_006): 지원하지 않는 제공자
+                    - 403 (AUTH_004): 비활성화된 계정
+                    """
+    )
+    @PostMapping("/social/{provider}")
+    public ApiResponse<SocialLoginResponse> socialLogin(
+            @PathVariable String provider,
+            @Valid @RequestBody SocialLoginRequest request) {
+        return ApiResponse.ok(authService.socialLogin(provider, request));
     }
 }
