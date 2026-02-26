@@ -1,6 +1,7 @@
 package com.link.vibe.domain.auth.controller;
 
 import com.link.vibe.domain.auth.dto.LoginRequest;
+import com.link.vibe.domain.auth.dto.RefreshRequest;
 import com.link.vibe.domain.auth.dto.SignupRequest;
 import com.link.vibe.domain.auth.dto.SocialLoginRequest;
 import com.link.vibe.domain.auth.dto.SocialLoginResponse;
@@ -55,6 +56,24 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.ok(authService.login(request));
+    }
+
+    @Operation(
+            summary = "토큰 갱신",
+            description = """
+                    Refresh Token으로 새로운 Access Token과 Refresh Token을 발급합니다.
+
+                    **Refresh Token Rotation:** 갱신 시 Refresh Token도 함께 교체됩니다.
+                    기존 Refresh Token은 즉시 무효화되므로, 반드시 새로 받은 토큰을 저장하세요.
+
+                    **에러:**
+                    - 401 (AUTH_007): 유효하지 않은 Refresh Token (만료, 위조, Redis 불일치)
+                    - 403 (AUTH_004): 비활성화된 계정
+                    """
+    )
+    @PostMapping("/refresh")
+    public ApiResponse<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request) {
+        return ApiResponse.ok(authService.refresh(request));
     }
 
     @Operation(

@@ -1,6 +1,7 @@
 package com.link.vibe.domain.vibe.service.auth;
 
 import com.link.vibe.domain.auth.dto.LoginRequest;
+import com.link.vibe.domain.auth.dto.RefreshRequest;
 import com.link.vibe.domain.auth.dto.SignupRequest;
 import com.link.vibe.domain.auth.dto.SocialLoginRequest;
 import com.link.vibe.domain.auth.dto.SocialLoginResponse;
@@ -95,6 +96,52 @@ public class AuthService {
                 user.getProfileImageUrl(),
                 accessToken,
                 refreshToken
+        );
+    }
+
+    @Transactional
+    public TokenResponse refresh(RefreshRequest request) {
+        String refreshToken = request.refreshToken();
+
+        // 1. 토큰 유효성 검증
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // 2. REFRESH 타입인지 확인
+        String tokenType = jwtTokenProvider.getTokenType(refreshToken);
+        if (!"REFRESH".equals(tokenType)) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // 3. Redis에 저장된 토큰과 일치하는지 확인
+        Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        if (!refreshTokenService.validate(userId, refreshToken)) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // 4. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (!user.isActive()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
+        }
+
+        // 5. 새 토큰 발급
+        String newAccessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getEmail());
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getUserId(), user.getEmail());
+
+        // 6. Redis에 새 Refresh Token 저장 (기존 토큰 교체)
+        refreshTokenService.save(user.getUserId(), newRefreshToken);
+
+        return new TokenResponse(
+                user.getUserId(),
+                user.getEmail(),
+                user.getNickname(),
+                user.getProfileImageUrl(),
+                newAccessToken,
+                newRefreshToken
         );
     }
 
