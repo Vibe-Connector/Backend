@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface MoodKeywordRepository extends JpaRepository<MoodKeyword, Long> {
     List<MoodKeyword> findAllByOrderByKeywordId();
+
+    List<MoodKeyword> findByCategoryOrderByKeywordId(String category);
 }
