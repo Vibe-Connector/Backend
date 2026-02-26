@@ -8,6 +8,7 @@ import com.link.vibe.domain.auth.dto.SocialLoginResponse;
 import com.link.vibe.domain.auth.dto.TokenResponse;
 import com.link.vibe.domain.vibe.service.auth.AuthService;
 import com.link.vibe.global.common.ApiResponse;
+import com.link.vibe.global.security.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -74,6 +75,27 @@ public class AuthController {
     @PostMapping("/refresh")
     public ApiResponse<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request) {
         return ApiResponse.ok(authService.refresh(request));
+    }
+
+    @Operation(
+            summary = "로그아웃",
+            description = """
+                    현재 로그인된 사용자를 로그아웃합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    **동작:** Redis에서 해당 사용자의 Refresh Token을 삭제합니다.
+                    Access Token은 만료 시까지 유효하므로, 클라이언트에서도 토큰을 삭제하세요.
+
+                    **에러:**
+                    - 401 (AUTH_001): 인증되지 않은 요청 (토큰 없음 또는 만료)
+                    """
+    )
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        authService.logout(userId);
+        return ApiResponse.ok(null);
     }
 
     @Operation(

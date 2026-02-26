@@ -145,6 +145,10 @@ public class AuthService {
         );
     }
 
+    public void logout(Long userId) {
+        refreshTokenService.delete(userId);
+    }
+
     @Transactional
     public SocialLoginResponse socialLogin(String provider, SocialLoginRequest request) {
         String upperProvider = provider.toUpperCase();
