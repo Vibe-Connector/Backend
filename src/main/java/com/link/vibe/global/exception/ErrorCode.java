@@ -20,6 +20,9 @@ public enum ErrorCode {
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUTH_002", "접근 권한이 없습니다."),
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_003", "이메일 또는 비밀번호가 올바르지 않습니다."),
     ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "AUTH_004", "비활성화된 계정입니다."),
+    SOCIAL_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_005", "소셜 로그인에 실패했습니다."),
+    UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_006", "지원하지 않는 소셜 로그인 제공자입니다."),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_007", "유효하지 않은 Refresh Token입니다."),
 
     // 사용자 (USER)
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다."),

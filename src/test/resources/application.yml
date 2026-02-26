@@ -23,6 +23,14 @@ jwt:
   access-token-expiration: 1800000
   refresh-token-expiration: 604800000
 
+oauth:
+  google:
+    client-id: test-google-client-id
+    client-secret: test-google-client-secret
+  naver:
+    client-id: test-naver-client-id
+    client-secret: test-naver-client-secret
+
 openai:
   api-key: test-key
   model: gpt-4o-mini
