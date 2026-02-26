@@ -42,10 +42,20 @@ public class VibeService {
     @Value("${openai.model:gpt-4o-mini}")
     private String aiModel;
 
-    private static final Long DEFAULT_USER_ID = 1L;
+    @Transactional
+    public VibeSessionCreateResponse createSession(Long userId) {
+        VibeSession session = VibeSession.builder().userId(userId).build();
+        vibeSessionRepository.save(session);
+
+        return new VibeSessionCreateResponse(
+                session.getSessionId(),
+                session.getStatus(),
+                session.getCreatedAt()
+        );
+    }
 
     @Transactional
-    public VibeResultResponse createVibe(VibeCreateRequest request) {
+    public VibeResultResponse createVibe(Long userId, VibeCreateRequest request) {
         // 옵션 검증
         List<MoodKeyword> moodKeywords = moodKeywordRepository.findAllById(request.moodKeywordIds());
         if (moodKeywords.size() != request.moodKeywordIds().size()) {
@@ -62,7 +72,7 @@ public class VibeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "유효하지 않은 동반자 옵션입니다."));
 
         // 1. 세션 생성
-        VibeSession session = VibeSession.builder().userId(DEFAULT_USER_ID).build();
+        VibeSession session = VibeSession.builder().userId(userId).build();
         vibeSessionRepository.save(session);
 
         // 2. OpenAI 호출
