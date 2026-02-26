@@ -3,7 +3,9 @@ package com.link.vibe.domain.user.controller;
 import com.link.vibe.domain.user.dto.ProfileImageResponse;
 import com.link.vibe.domain.user.dto.PublicUserProfileResponse;
 import com.link.vibe.domain.user.dto.UpdateProfileRequest;
+import com.link.vibe.domain.user.dto.UpdateSettingsRequest;
 import com.link.vibe.domain.user.dto.UserProfileResponse;
+import com.link.vibe.domain.user.dto.UserSettingsResponse;
 import com.link.vibe.domain.vibe.service.user.UserService;
 import com.link.vibe.global.common.ApiResponse;
 import com.link.vibe.global.security.SecurityUtil;
@@ -95,5 +97,37 @@ public class UserController {
     public ApiResponse<ProfileImageResponse> uploadProfileImage(@RequestParam("file") MultipartFile file) {
         Long userId = SecurityUtil.getCurrentUserId();
         return ApiResponse.ok(userService.uploadProfileImage(userId, file));
+    }
+
+    @Operation(
+            summary = "내 설정 조회",
+            description = """
+                    현재 로그인된 사용자의 설정을 조회합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    설정이 없는 경우 기본값(push=true, email=true, privacy=PRIVATE)으로 자동 생성됩니다.
+                    """
+    )
+    @GetMapping("/me/settings")
+    public ApiResponse<UserSettingsResponse> getMySettings() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return ApiResponse.ok(userService.getMySettings(userId));
+    }
+
+    @Operation(
+            summary = "내 설정 수정",
+            description = """
+                    현재 로그인된 사용자의 설정을 수정합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    전달된 필드만 수정되며, null인 필드는 변경되지 않습니다.
+                    """
+    )
+    @PutMapping("/me/settings")
+    public ApiResponse<UserSettingsResponse> updateMySettings(@Valid @RequestBody UpdateSettingsRequest request) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return ApiResponse.ok(userService.updateMySettings(userId, request));
     }
 }

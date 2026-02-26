@@ -3,9 +3,13 @@ package com.link.vibe.domain.vibe.service.user;
 import com.link.vibe.domain.user.dto.ProfileImageResponse;
 import com.link.vibe.domain.user.dto.PublicUserProfileResponse;
 import com.link.vibe.domain.user.dto.UpdateProfileRequest;
+import com.link.vibe.domain.user.dto.UpdateSettingsRequest;
 import com.link.vibe.domain.user.dto.UserProfileResponse;
+import com.link.vibe.domain.user.dto.UserSettingsResponse;
 import com.link.vibe.domain.user.entity.User;
+import com.link.vibe.domain.user.entity.UserSettings;
 import com.link.vibe.domain.user.repository.UserRepository;
+import com.link.vibe.domain.user.repository.UserSettingsRepository;
 import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
 import com.link.vibe.global.service.S3StorageService;
@@ -19,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserSettingsRepository userSettingsRepository;
     private final S3StorageService s3StorageService;
 
     @Transactional(readOnly = true)
@@ -73,5 +78,32 @@ public class UserService {
         user.updateProfileImageUrl(imageUrl);
 
         return new ProfileImageResponse(imageUrl);
+    }
+
+    @Transactional(readOnly = true)
+    public UserSettingsResponse getMySettings(Long userId) {
+        UserSettings settings = userSettingsRepository.findByUserUserId(userId)
+                .orElseGet(() -> createDefaultSettings(userId));
+        return UserSettingsResponse.from(settings);
+    }
+
+    @Transactional
+    public UserSettingsResponse updateMySettings(Long userId, UpdateSettingsRequest request) {
+        UserSettings settings = userSettingsRepository.findByUserUserId(userId)
+                .orElseGet(() -> createDefaultSettings(userId));
+
+        settings.update(
+                request.pushEnabled(),
+                request.emailNotification(),
+                request.defaultSharePrivacy()
+        );
+
+        return UserSettingsResponse.from(settings);
+    }
+
+    private UserSettings createDefaultSettings(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return userSettingsRepository.save(UserSettings.builder().user(user).build());
     }
 }
