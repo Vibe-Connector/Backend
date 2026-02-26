@@ -227,6 +227,11 @@ public class AuthService {
         return !userRepository.existsByEmail(email);
     }
 
+    @Transactional(readOnly = true)
+    public boolean checkNicknameAvailable(String nickname) {
+        return !userRepository.existsByNickname(nickname);
+    }
+
     private String generateUniqueNickname(String baseName) {
         String base = (baseName != null && !baseName.isBlank()) ? baseName : "user";
         String nickname = base;
