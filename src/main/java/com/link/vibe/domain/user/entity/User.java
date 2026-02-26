@@ -87,6 +87,10 @@ public class User {
         return "ACTIVE".equals(this.status);
     }
 
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
     public void updateProfile(String nickname, String name, String gender, Integer birthYear,
                               String profileImageUrl, Long preferredLanguageId) {
         if (nickname != null) this.nickname = nickname;

@@ -31,6 +31,15 @@ oauth:
     client-id: test-naver-client-id
     client-secret: test-naver-client-secret
 
+cloud:
+  aws:
+    s3:
+      bucket: test-bucket
+      region: ap-northeast-2
+    credentials:
+      access-key:
+      secret-key:
+
 openai:
   api-key: test-key
   model: gpt-4o-mini
