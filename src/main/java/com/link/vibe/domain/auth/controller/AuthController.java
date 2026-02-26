@@ -1,6 +1,7 @@
 package com.link.vibe.domain.auth.controller;
 
 import com.link.vibe.domain.auth.dto.CheckEmailResponse;
+import com.link.vibe.domain.auth.dto.CheckNicknameResponse;
 import com.link.vibe.domain.auth.dto.LoginRequest;
 import com.link.vibe.domain.auth.dto.RefreshRequest;
 import com.link.vibe.domain.auth.dto.SignupRequest;
@@ -113,6 +114,22 @@ public class AuthController {
     public ApiResponse<CheckEmailResponse> checkEmail(@RequestParam String email) {
         boolean available = authService.checkEmailAvailable(email);
         return ApiResponse.ok(new CheckEmailResponse(available));
+    }
+
+    @Operation(
+            summary = "닉네임 중복 확인",
+            description = """
+                    회원가입 전 닉네임 사용 가능 여부를 확인합니다.
+
+                    **응답:**
+                    - available=true: 사용 가능한 닉네임
+                    - available=false: 이미 사용 중인 닉네임
+                    """
+    )
+    @GetMapping("/check-nickname")
+    public ApiResponse<CheckNicknameResponse> checkNickname(@RequestParam String nickname) {
+        boolean available = authService.checkNicknameAvailable(nickname);
+        return ApiResponse.ok(new CheckNicknameResponse(available));
     }
 
     @Operation(
