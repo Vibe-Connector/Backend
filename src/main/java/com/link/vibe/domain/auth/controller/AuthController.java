@@ -1,5 +1,6 @@
 package com.link.vibe.domain.auth.controller;
 
+import com.link.vibe.domain.auth.dto.LoginRequest;
 import com.link.vibe.domain.auth.dto.SignupRequest;
 import com.link.vibe.domain.auth.dto.TokenResponse;
 import com.link.vibe.domain.vibe.service.auth.AuthService;
@@ -37,5 +38,23 @@ public class AuthController {
     @PostMapping("/signup")
     public ApiResponse<TokenResponse> signup(@Valid @RequestBody SignupRequest request) {
         return ApiResponse.ok(authService.signup(request));
+    }
+
+    @Operation(
+            summary = "이메일 로그인",
+            description = """
+                    이메일과 비밀번호로 로그인합니다.
+
+                    **성공 시:** 사용자 정보와 JWT 토큰(Access + Refresh)을 반환합니다.
+                    기존 Refresh Token은 새로 발급된 토큰으로 교체됩니다.
+
+                    **에러:**
+                    - 401 (AUTH_003): 이메일 또는 비밀번호 불일치
+                    - 403 (AUTH_004): 비활성화된 계정
+                    """
+    )
+    @PostMapping("/login")
+    public ApiResponse<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ApiResponse.ok(authService.login(request));
     }
 }
