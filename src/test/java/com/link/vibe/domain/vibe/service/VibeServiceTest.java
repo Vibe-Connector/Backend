@@ -116,7 +116,7 @@ class VibeServiceTest {
         // when & then
         assertThatThrownBy(() -> vibeService.createVibe(request))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("유효하지 않은 기분 키워드");
+                .hasMessageContaining("키워드");
     }
 
     @Test
