@@ -14,6 +14,9 @@ public record TokenResponse(
         @Schema(description = "닉네임", example = "바이브유저")
         String nickname,
 
+        @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
+        String profileImageUrl,
+
         @Schema(description = "Access Token (Bearer)", example = "eyJhbGciOiJIUzI1NiJ9...")
         String accessToken,
 

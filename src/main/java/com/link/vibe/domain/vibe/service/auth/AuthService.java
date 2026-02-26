@@ -1,5 +1,6 @@
 package com.link.vibe.domain.vibe.service.auth;
 
+import com.link.vibe.domain.auth.dto.LoginRequest;
 import com.link.vibe.domain.auth.dto.SignupRequest;
 import com.link.vibe.domain.auth.dto.TokenResponse;
 import com.link.vibe.domain.user.entity.User;
@@ -49,6 +50,37 @@ public class AuthService {
                 savedUser.getUserId(),
                 savedUser.getEmail(),
                 savedUser.getNickname(),
+                savedUser.getProfileImageUrl(),
+                accessToken,
+                refreshToken
+        );
+    }
+
+    @Transactional
+    public TokenResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new BusinessException(ErrorCode.LOGIN_FAILED));
+
+        if (!user.isActive()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
+        }
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new BusinessException(ErrorCode.LOGIN_FAILED);
+        }
+
+        user.updateLastLoginAt();
+
+        String accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getEmail());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getUserId(), user.getEmail());
+
+        refreshTokenService.save(user.getUserId(), refreshToken);
+
+        return new TokenResponse(
+                user.getUserId(),
+                user.getEmail(),
+                user.getNickname(),
+                user.getProfileImageUrl(),
                 accessToken,
                 refreshToken
         );
