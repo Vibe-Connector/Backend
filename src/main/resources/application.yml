@@ -14,9 +14,18 @@ spring:
   sql:
     init:
       mode: never
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 server:
   port: 8080
+
+jwt:
+  secret: ${JWT_SECRET:vibelink-default-secret-key-for-development-only-change-in-production-please}
+  access-token-expiration: 1800000    # 30분
+  refresh-token-expiration: 604800000 # 7일
 
 openai:
   api-key: ${OPENAI_API_KEY}

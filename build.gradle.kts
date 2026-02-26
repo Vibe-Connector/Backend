@@ -30,6 +30,7 @@ dependencies {
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
