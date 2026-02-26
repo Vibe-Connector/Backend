@@ -1,5 +1,6 @@
 package com.link.vibe.domain.auth.controller;
 
+import com.link.vibe.domain.auth.dto.CheckEmailResponse;
 import com.link.vibe.domain.auth.dto.LoginRequest;
 import com.link.vibe.domain.auth.dto.RefreshRequest;
 import com.link.vibe.domain.auth.dto.SignupRequest;
@@ -96,6 +97,22 @@ public class AuthController {
         Long userId = SecurityUtil.getCurrentUserId();
         authService.logout(userId);
         return ApiResponse.ok(null);
+    }
+
+    @Operation(
+            summary = "이메일 중복 확인",
+            description = """
+                    회원가입 전 이메일 사용 가능 여부를 확인합니다.
+
+                    **응답:**
+                    - available=true: 사용 가능한 이메일
+                    - available=false: 이미 사용 중인 이메일
+                    """
+    )
+    @GetMapping("/check-email")
+    public ApiResponse<CheckEmailResponse> checkEmail(@RequestParam String email) {
+        boolean available = authService.checkEmailAvailable(email);
+        return ApiResponse.ok(new CheckEmailResponse(available));
     }
 
     @Operation(

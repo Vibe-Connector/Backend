@@ -222,6 +222,11 @@ public class AuthService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public boolean checkEmailAvailable(String email) {
+        return !userRepository.existsByEmail(email);
+    }
+
     private String generateUniqueNickname(String baseName) {
         String base = (baseName != null && !baseName.isBlank()) ? baseName : "user";
         String nickname = base;
