@@ -2,14 +2,17 @@ package com.link.vibe.domain.item.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.link.vibe.domain.item.dto.LightingDetailResponse;
 import com.link.vibe.domain.item.dto.MovieDetailResponse;
 import com.link.vibe.domain.item.dto.MusicDetailResponse;
 import com.link.vibe.domain.item.entity.Item;
+import com.link.vibe.domain.item.entity.LightingDetail;
 import com.link.vibe.domain.item.entity.MovieDetail;
 import com.link.vibe.domain.item.entity.MusicDetail;
 import com.link.vibe.domain.item.repository.ItemCategoryTranslationRepository;
 import com.link.vibe.domain.item.repository.ItemRepository;
 import com.link.vibe.domain.item.repository.ItemTranslationRepository;
+import com.link.vibe.domain.item.repository.LightingDetailRepository;
 import com.link.vibe.domain.item.repository.MovieDetailRepository;
 import com.link.vibe.domain.item.repository.MusicDetailRepository;
 import com.link.vibe.global.exception.BusinessException;
@@ -33,6 +36,7 @@ public class ItemService {
     private final ItemCategoryTranslationRepository categoryTranslationRepository;
     private final MovieDetailRepository movieDetailRepository;
     private final MusicDetailRepository musicDetailRepository;
+    private final LightingDetailRepository lightingDetailRepository;
     private final ObjectMapper objectMapper;
 
     public MovieDetailResponse getMovieDetail(Long itemId, Long languageId) {
@@ -96,6 +100,38 @@ public class ItemService {
                 detail.getPreviewUrl(),
                 detail.getSpotifyUri(),
                 detail.getContentType()
+        );
+    }
+
+    public LightingDetailResponse getLightingDetail(Long itemId, Long languageId) {
+        Item item = findActiveItem(itemId);
+        LightingDetail detail = lightingDetailRepository.findByItemId(itemId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ITEM_NOT_FOUND));
+
+        String itemName = getItemName(itemId, languageId);
+        String description = getItemDescription(itemId, languageId);
+        String categoryName = getCategoryName(item.getCategory().getCategoryId(), languageId);
+
+        return new LightingDetailResponse(
+                item.getItemId(),
+                itemName,
+                description,
+                item.getCategory().getCategoryKey(),
+                categoryName,
+                item.getBrand(),
+                item.getImageUrl(),
+                item.getExternalLink(),
+                item.getExternalService(),
+                detail.getColorTempKelvin(),
+                detail.getColorTempName(),
+                detail.getBrightnessPercent(),
+                detail.getBrightnessLevel(),
+                detail.getLightingType(),
+                detail.getLightColor(),
+                detail.getPosition(),
+                detail.getSpaceContext(),
+                detail.getTimeContext(),
+                detail.getIsDynamic()
         );
     }
 
