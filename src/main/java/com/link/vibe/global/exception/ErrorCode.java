@@ -46,6 +46,9 @@ public enum ErrorCode {
     ARCHIVE_NOT_FOUND(HttpStatus.NOT_FOUND, "ARCHIVE_001", "아카이브를 찾을 수 없습니다."),
     ARCHIVE_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "ARCHIVE_002", "아카이브 아이템을 찾을 수 없습니다."),
     ARCHIVE_DUPLICATE(HttpStatus.CONFLICT, "ARCHIVE_003", "이미 저장된 아카이브입니다."),
+    ARCHIVE_FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ARCHIVE_004", "폴더를 찾을 수 없습니다."),
+    ARCHIVE_FOLDER_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "ARCHIVE_005", "폴더 타입이 일치하지 않습니다."),
+    ARCHIVE_INVALID_FOLDER_TYPE(HttpStatus.BAD_REQUEST, "ARCHIVE_006", "유효하지 않은 폴더 타입입니다."),
 
     // 알림 (NOTI)
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTI_001", "알림을 찾을 수 없습니다."),
