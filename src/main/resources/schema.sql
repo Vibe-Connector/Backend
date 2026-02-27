@@ -608,14 +608,15 @@ CREATE TABLE vibe_sessions (
 
 -- ----------------------------------------------------------------------------
 -- 아카이브 폴더 테이블
--- 사용자가 저장한 Vibe 결과를 정리하는 폴더.
--- v3.2: icon → thumbnail_url (기본값: 첫 번째 저장 사진, 유저 업로드 가능).
---       color 삭제.
+-- 사용자가 저장한 Vibe 결과 또는 아이템을 정리하는 타입별 폴더.
+-- v3.2: icon → thumbnail_url. color 삭제.
+-- v3.2.1: folder_type 추가 — VIBE 폴더와 ITEM 폴더를 구분.
 -- ----------------------------------------------------------------------------
 CREATE TABLE archive_folders (
     folder_id BIGINT PRIMARY KEY AUTO_INCREMENT,          -- 폴더 고유 식별자
     user_id BIGINT NOT NULL,                               -- 사용자 ID (FK)
     folder_name VARCHAR(100) NOT NULL,                     -- 폴더명
+    folder_type ENUM('VIBE', 'ITEM') NOT NULL DEFAULT 'VIBE',  -- 폴더 타입 (VIBE: Vibe 결과용, ITEM: 개별 아이템용)
     thumbnail_url VARCHAR(500),                            -- 폴더 썸네일 URL (기본: 첫 저장 사진, 유저 업로드 가능)
     sort_order INT DEFAULT 0,                              -- 정렬 순서
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,        -- 생성 시각
@@ -697,19 +698,20 @@ CREATE TABLE vibe_prompts (
 -- 아카이브 아이템 테이블
 -- 사용자가 개별 아이템을 저장한 이력.
 -- v3.2: reaction_id 추가 (feed_reactions.reaction_id 논리적 참조).
---       즐겨찾기 여부는 연결된 feed_reaction 존재 여부로 판단.
---       FK 제약 없음 (생성 순서 독립성 유지, 앱 레벨에서 참조 무결성 관리).
+-- v3.2.1: folder_id 추가 — ITEM 타입 폴더로 분류 가능.
 -- ----------------------------------------------------------------------------
 CREATE TABLE archive_items (
     archive_item_id BIGINT PRIMARY KEY AUTO_INCREMENT,    -- 아카이브 아이템 고유 식별자
     user_id BIGINT NOT NULL,                               -- 사용자 ID (FK)
     item_id BIGINT NOT NULL,                               -- 아이템 ID (FK)
+    folder_id BIGINT,                                      -- 폴더 ID (FK, NULL = 미분류, ITEM 타입 폴더만)
     reaction_id BIGINT,                                    -- 피드 반응 ID (feed_reactions 참조, NULL 허용)
     memo VARCHAR(500),                                     -- 사용자 메모
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,        -- 저장 시각
     UNIQUE KEY uk_user_item (user_id, item_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE
+    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,
+    FOREIGN KEY (folder_id) REFERENCES archive_folders(folder_id) ON DELETE SET NULL
 );
 
 
@@ -850,17 +852,22 @@ CREATE TABLE feed_comments (
 
 -- ----------------------------------------------------------------------------
 -- 즐겨찾기 테이블
--- archive_vibes의 즐겨찾기를 별도 관리.
+-- archive_vibes 및 archive_items의 즐겨찾기를 별도 관리.
 -- v3.2 신규: archive_vibes.is_favorite 대체.
+-- v3.2.1: archive_id nullable 변경, archive_item_id 추가 — 아이템 즐겨찾기 지원.
+--         archive_id와 archive_item_id 중 정확히 하나만 NOT NULL (서비스 레이어에서 검증).
 -- ----------------------------------------------------------------------------
 CREATE TABLE favorites (
     favorite_id BIGINT PRIMARY KEY AUTO_INCREMENT,        -- 즐겨찾기 고유 식별자
     user_id BIGINT NOT NULL,                               -- 사용자 ID (FK)
-    archive_id BIGINT NOT NULL,                            -- 아카이브 Vibe ID (FK → archive_vibes)
+    archive_id BIGINT,                                     -- 아카이브 Vibe ID (FK → archive_vibes, NULL 허용)
+    archive_item_id BIGINT,                                -- 아카이브 아이템 ID (FK → archive_items, NULL 허용)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,        -- 즐겨찾기 시각
     UNIQUE KEY uk_user_archive (user_id, archive_id),
+    UNIQUE KEY uk_user_archive_item (user_id, archive_item_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (archive_id) REFERENCES archive_vibes(archive_id) ON DELETE CASCADE
+    FOREIGN KEY (archive_id) REFERENCES archive_vibes(archive_id) ON DELETE CASCADE,
+    FOREIGN KEY (archive_item_id) REFERENCES archive_items(archive_item_id) ON DELETE CASCADE
 );
 
 
