@@ -79,6 +79,46 @@ public class ArchiveController {
         return ApiResponse.ok(archiveService.toggleVibeFavorite(userDetails.getUserId(), archiveId));
     }
 
+    // ──── 아이템 아카이브 (B-23 ~ B-25) ────
+
+    @Operation(summary = "아이템 아카이브 저장", description = "아이템을 아카이브에 저장합니다. 선택적으로 ITEM 타입 폴더에 분류할 수 있습니다. 동일 사용자가 같은 아이템을 중복 저장할 수 없습니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "아카이브 저장 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "아이템 또는 폴더를 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "폴더 타입 불일치 (ARCHIVE_005)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 저장된 아카이브 (ARCHIVE_003)")
+    })
+    @PostMapping("/items")
+    public ApiResponse<ArchiveItemResponse> archiveItem(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody ArchiveItemRequest request) {
+        return ApiResponse.ok(archiveService.archiveItem(userDetails.getUserId(), request));
+    }
+
+    @Operation(summary = "아카이브 아이템 목록 조회", description = "사용자가 아카이브한 아이템 목록을 커서 기반 페이지네이션으로 조회합니다. folderId로 폴더별 필터링이 가능합니다.")
+    @GetMapping("/items")
+    public ApiResponse<PageResponse<ArchiveItemResponse>> getArchiveItems(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "폴더 ID (미지정 시 전체 조회)", example = "1")
+            @RequestParam(required = false) Long folderId,
+            @ModelAttribute CursorPageRequest pageRequest) {
+        return ApiResponse.ok(archiveService.getArchiveItems(
+                userDetails.getUserId(), folderId, pageRequest));
+    }
+
+    @Operation(summary = "아카이브 아이템 삭제", description = "아카이브한 아이템을 삭제합니다. 연관된 즐겨찾기는 ON DELETE CASCADE로 자동 삭제됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "아카이브 삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "아카이브 아이템을 찾을 수 없음 (ARCHIVE_002)")
+    })
+    @DeleteMapping("/items/{archiveItemId}")
+    public ApiResponse<Void> deleteArchiveItem(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "아카이브 아이템 ID", example = "1") @PathVariable Long archiveItemId) {
+        archiveService.deleteArchiveItem(userDetails.getUserId(), archiveItemId);
+        return ApiResponse.ok(null);
+    }
+
     // ──── 폴더 CRUD (B-26 ~ B-29) ────
 
     @Operation(summary = "폴더 생성", description = "아카이브 폴더를 생성합니다. folderType으로 VIBE(Vibe 결과용) 또는 ITEM(개별 아이템용)을 지정합니다.")

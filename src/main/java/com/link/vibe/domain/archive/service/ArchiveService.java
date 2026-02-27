@@ -2,11 +2,16 @@ package com.link.vibe.domain.archive.service;
 
 import com.link.vibe.domain.archive.dto.*;
 import com.link.vibe.domain.archive.entity.ArchiveFolder;
+import com.link.vibe.domain.archive.entity.ArchiveItem;
 import com.link.vibe.domain.archive.entity.ArchiveVibe;
 import com.link.vibe.domain.archive.entity.Favorite;
 import com.link.vibe.domain.archive.repository.ArchiveFolderRepository;
+import com.link.vibe.domain.archive.repository.ArchiveItemRepository;
 import com.link.vibe.domain.archive.repository.ArchiveVibeRepository;
 import com.link.vibe.domain.archive.repository.FavoriteRepository;
+import com.link.vibe.domain.item.entity.Item;
+import com.link.vibe.domain.item.repository.ItemRepository;
+import com.link.vibe.domain.item.repository.ItemTranslationRepository;
 import com.link.vibe.domain.user.entity.User;
 import com.link.vibe.domain.user.repository.UserRepository;
 import com.link.vibe.domain.vibe.entity.VibeResult;
@@ -15,6 +20,7 @@ import com.link.vibe.global.common.CursorPageRequest;
 import com.link.vibe.global.common.PageResponse;
 import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
+import com.link.vibe.global.i18n.LanguageContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -30,9 +36,12 @@ import java.util.List;
 public class ArchiveService {
 
     private final ArchiveVibeRepository archiveVibeRepository;
+    private final ArchiveItemRepository archiveItemRepository;
     private final ArchiveFolderRepository archiveFolderRepository;
     private final FavoriteRepository favoriteRepository;
     private final UserRepository userRepository;
+    private final ItemRepository itemRepository;
+    private final ItemTranslationRepository itemTranslationRepository;
     private final VibeResultRepository vibeResultRepository;
 
     // ──── Vibe 아카이브 ────
@@ -102,6 +111,85 @@ public class ArchiveService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_NOT_FOUND));
 
         archiveVibeRepository.delete(archiveVibe);
+    }
+
+    // ──── 아이템 아카이브 ────
+
+    @Transactional
+    public ArchiveItemResponse archiveItem(Long userId, ArchiveItemRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Item item = itemRepository.findById(request.itemId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.ITEM_NOT_FOUND));
+
+        if (archiveItemRepository.existsByUserUserIdAndItemItemId(userId, request.itemId())) {
+            throw new BusinessException(ErrorCode.ARCHIVE_DUPLICATE);
+        }
+
+        ArchiveFolder folder = null;
+        if (request.folderId() != null) {
+            folder = archiveFolderRepository.findByFolderIdAndUserUserId(request.folderId(), userId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
+            if (!folder.isItemFolder()) {
+                throw new BusinessException(ErrorCode.ARCHIVE_FOLDER_TYPE_MISMATCH);
+            }
+        }
+
+        ArchiveItem archiveItem = ArchiveItem.builder()
+                .user(user)
+                .item(item)
+                .folder(folder)
+                .reactionId(request.reactionId())
+                .memo(request.memo())
+                .build();
+
+        ArchiveItem saved = archiveItemRepository.save(archiveItem);
+
+        String itemName = resolveItemName(item.getItemId());
+        String categoryKey = item.getCategory().getCategoryKey();
+        return ArchiveItemResponse.of(saved, itemName, categoryKey, false);
+    }
+
+    public PageResponse<ArchiveItemResponse> getArchiveItems(
+            Long userId, Long folderId, CursorPageRequest pageRequest) {
+
+        int fetchSize = pageRequest.getFetchSize();
+        PageRequest pageable = PageRequest.of(0, fetchSize);
+
+        List<ArchiveItem> archiveItems;
+        if (folderId != null) {
+            archiveItems = pageRequest.hasCursor()
+                    ? archiveItemRepository.findByUserAndFolderWithCursor(
+                            userId, folderId, Long.parseLong(pageRequest.getCursor()), pageable)
+                    : archiveItemRepository.findByUserAndFolder(userId, folderId, pageable);
+        } else {
+            archiveItems = pageRequest.hasCursor()
+                    ? archiveItemRepository.findByUserWithCursor(
+                            userId, Long.parseLong(pageRequest.getCursor()), pageable)
+                    : archiveItemRepository.findByUser(userId, pageable);
+        }
+
+        List<ArchiveItemResponse> content = archiveItems.stream()
+                .map(ai -> {
+                    String itemName = resolveItemName(ai.getItem().getItemId());
+                    String categoryKey = ai.getItem().getCategory().getCategoryKey();
+                    boolean isFavorite = favoriteRepository
+                            .existsByUserUserIdAndArchiveItemArchiveItemId(userId, ai.getArchiveItemId());
+                    return ArchiveItemResponse.of(ai, itemName, categoryKey, isFavorite);
+                })
+                .toList();
+
+        return PageResponse.of(content, pageRequest.getEffectiveSize(),
+                item -> String.valueOf(item.archiveItemId()));
+    }
+
+    @Transactional
+    public void deleteArchiveItem(Long userId, Long archiveItemId) {
+        ArchiveItem archiveItem = archiveItemRepository.findByArchiveItemIdAndUserUserId(archiveItemId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_ITEM_NOT_FOUND));
+
+        archiveItemRepository.delete(archiveItem);
     }
 
     // ──── Vibe 즐겨찾기 ────
@@ -177,5 +265,17 @@ public class ArchiveService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
 
         archiveFolderRepository.delete(folder);
+    }
+
+    // ──── 내부 헬퍼 ────
+
+    private String resolveItemName(Long itemId) {
+        Long languageId = LanguageContext.getLanguageId();
+        if (languageId == null) {
+            return null;
+        }
+        return itemTranslationRepository.findByItemItemIdAndLanguageLanguageId(itemId, languageId)
+                .map(t -> t.getItemValue())
+                .orElse(null);
     }
 }
