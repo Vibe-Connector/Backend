@@ -65,6 +65,20 @@ public class ArchiveController {
         return ApiResponse.ok(null);
     }
 
+    // ──── Vibe 즐겨찾기 (B-25) ────
+
+    @Operation(summary = "Vibe 아카이브 즐겨찾기 토글", description = "아카이브한 Vibe 결과의 즐겨찾기를 토글합니다. 이미 즐겨찾기된 경우 해제, 아닌 경우 등록합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 토글 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "아카이브를 찾을 수 없음 (ARCHIVE_001)")
+    })
+    @PostMapping("/vibes/{archiveId}/favorite")
+    public ApiResponse<FavoriteResponse> toggleVibeFavorite(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "아카이브 ID", example = "1") @PathVariable Long archiveId) {
+        return ApiResponse.ok(archiveService.toggleVibeFavorite(userDetails.getUserId(), archiveId));
+    }
+
     // ──── 폴더 CRUD (B-26 ~ B-29) ────
 
     @Operation(summary = "폴더 생성", description = "아카이브 폴더를 생성합니다. folderType으로 VIBE(Vibe 결과용) 또는 ITEM(개별 아이템용)을 지정합니다.")

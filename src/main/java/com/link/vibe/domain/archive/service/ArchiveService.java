@@ -3,8 +3,10 @@ package com.link.vibe.domain.archive.service;
 import com.link.vibe.domain.archive.dto.*;
 import com.link.vibe.domain.archive.entity.ArchiveFolder;
 import com.link.vibe.domain.archive.entity.ArchiveVibe;
+import com.link.vibe.domain.archive.entity.Favorite;
 import com.link.vibe.domain.archive.repository.ArchiveFolderRepository;
 import com.link.vibe.domain.archive.repository.ArchiveVibeRepository;
+import com.link.vibe.domain.archive.repository.FavoriteRepository;
 import com.link.vibe.domain.user.entity.User;
 import com.link.vibe.domain.user.repository.UserRepository;
 import com.link.vibe.domain.vibe.entity.VibeResult;
@@ -29,6 +31,7 @@ public class ArchiveService {
 
     private final ArchiveVibeRepository archiveVibeRepository;
     private final ArchiveFolderRepository archiveFolderRepository;
+    private final FavoriteRepository favoriteRepository;
     private final UserRepository userRepository;
     private final VibeResultRepository vibeResultRepository;
 
@@ -99,6 +102,25 @@ public class ArchiveService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_NOT_FOUND));
 
         archiveVibeRepository.delete(archiveVibe);
+    }
+
+    // ──── Vibe 즐겨찾기 ────
+
+    @Transactional
+    public FavoriteResponse toggleVibeFavorite(Long userId, Long archiveId) {
+        ArchiveVibe archiveVibe = archiveVibeRepository.findByArchiveIdAndUserUserId(archiveId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_NOT_FOUND));
+
+        return favoriteRepository.findByUserUserIdAndArchiveVibeArchiveId(userId, archiveId)
+                .map(favorite -> {
+                    favoriteRepository.delete(favorite);
+                    return new FavoriteResponse(false);
+                })
+                .orElseGet(() -> {
+                    Favorite favorite = Favorite.ofVibe(archiveVibe.getUser(), archiveVibe);
+                    favoriteRepository.save(favorite);
+                    return new FavoriteResponse(true);
+                });
     }
 
     // ──── 폴더 CRUD ────
