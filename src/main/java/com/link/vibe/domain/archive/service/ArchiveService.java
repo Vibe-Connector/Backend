@@ -211,6 +211,25 @@ public class ArchiveService {
                 });
     }
 
+    // ──── 아이템 즐겨찾기 ────
+
+    @Transactional
+    public FavoriteResponse toggleItemFavorite(Long userId, Long archiveItemId) {
+        ArchiveItem archiveItem = archiveItemRepository.findByArchiveItemIdAndUserUserId(archiveItemId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_ITEM_NOT_FOUND));
+
+        return favoriteRepository.findByUserUserIdAndArchiveItemArchiveItemId(userId, archiveItemId)
+                .map(favorite -> {
+                    favoriteRepository.delete(favorite);
+                    return new FavoriteResponse(false);
+                })
+                .orElseGet(() -> {
+                    Favorite favorite = Favorite.ofItem(archiveItem.getUser(), archiveItem);
+                    favoriteRepository.save(favorite);
+                    return new FavoriteResponse(true);
+                });
+    }
+
     // ──── 폴더 CRUD ────
 
     @Transactional
