@@ -29,6 +29,9 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USER_002", "이미 사용 중인 이메일입니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "USER_003", "이미 사용 중인 닉네임입니다."),
     INVALID_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "USER_004", "현재 비밀번호가 올바르지 않습니다."),
+    SOCIAL_ACCOUNT_ALREADY_LINKED(HttpStatus.CONFLICT, "USER_005", "이미 연동된 소셜 계정입니다."),
+    SOCIAL_ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_006", "연동된 소셜 계정을 찾을 수 없습니다."),
+    CANNOT_UNLINK_LAST_AUTH(HttpStatus.BAD_REQUEST, "USER_007", "마지막 로그인 수단은 해제할 수 없습니다."),
 
     // Vibe (VIBE)
     VIBE_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "VIBE_001", "Vibe 세션을 찾을 수 없습니다."),
