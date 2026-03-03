@@ -96,6 +96,23 @@ public class UserController {
     }
 
     @Operation(
+            summary = "회원 탈퇴",
+            description = """
+                    현재 로그인된 사용자의 계정을 비활성화(소프트 삭제)합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    계정 상태가 INACTIVE로 변경되며, 이후 로그인이 차단됩니다.
+                    """
+    )
+    @DeleteMapping("/me")
+    public ApiResponse<Void> deleteAccount() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        userService.deleteAccount(userId);
+        return ApiResponse.ok(null);
+    }
+
+    @Operation(
             summary = "프로필 이미지 업로드",
             description = """
                     프로필 이미지를 S3에 업로드하고 사용자 프로필에 반영합니다.
