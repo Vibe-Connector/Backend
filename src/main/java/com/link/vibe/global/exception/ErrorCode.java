@@ -33,6 +33,8 @@ public enum ErrorCode {
     VIBE_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "VIBE_001", "Vibe 세션을 찾을 수 없습니다."),
     VIBE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "VIBE_002", "Vibe 결과를 찾을 수 없습니다."),
     VIBE_INVALID_KEYWORD(HttpStatus.BAD_REQUEST, "VIBE_003", "잘못된 키워드입니다."),
+    VIBE_SESSION_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "VIBE_004", "이미 완료된 Vibe 세션입니다."),
+    VIBE_EMBEDDING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "VIBE_005", "임베딩 생성에 실패했습니다."),
 
     // 아이템 (ITEM)
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "ITEM_001", "아이템을 찾을 수 없습니다."),
