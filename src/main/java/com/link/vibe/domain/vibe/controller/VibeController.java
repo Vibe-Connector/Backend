@@ -112,6 +112,27 @@ public class VibeController {
     }
 
     @Operation(
+            summary = "Vibe 추천 아이템 조회",
+            description = """
+                    특정 Vibe 결과의 추천 아이템을 카테고리별로 그룹화하여 조회합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    응답은 카테고리(movie, music, lighting, coffee)별로 추천 아이템 목록을 포함합니다.
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "결과를 찾을 수 없음")
+    })
+    @GetMapping("/results/{resultId}/items")
+    public ApiResponse<List<CategoryRecommendation>> getVibeItems(
+            @Parameter(description = "결과 ID", example = "1")
+            @PathVariable Long resultId) {
+        return ApiResponse.ok(vibeService.getVibeItems(resultId));
+    }
+
+    @Operation(
             summary = "Vibe 상세 조회",
             description = """
                     특정 세션의 Vibe 상세 정보(프롬프트 + 결과)를 조회합니다.
