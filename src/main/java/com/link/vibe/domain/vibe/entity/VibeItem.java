@@ -52,6 +52,10 @@ public class VibeItem {
         this.isUserLiked = false;
     }
 
+    public void toggleLike() {
+        this.isUserLiked = !Boolean.TRUE.equals(this.isUserLiked);
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
