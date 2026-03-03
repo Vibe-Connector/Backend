@@ -87,6 +87,10 @@ public class User {
         return "ACTIVE".equals(this.status);
     }
 
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
     public void updateProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
     }

@@ -1,5 +1,6 @@
 package com.link.vibe.domain.vibe.service.user;
 
+import com.link.vibe.domain.user.dto.ChangePasswordRequest;
 import com.link.vibe.domain.user.dto.ProfileImageResponse;
 import com.link.vibe.domain.user.dto.PublicUserProfileResponse;
 import com.link.vibe.domain.user.dto.UpdateProfileRequest;
@@ -14,6 +15,7 @@ import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
 import com.link.vibe.global.service.S3StorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserSettingsRepository userSettingsRepository;
     private final S3StorageService s3StorageService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public UserProfileResponse getMyProfile(Long userId) {
@@ -78,6 +81,18 @@ public class UserService {
         user.updateProfileImageUrl(imageUrl);
 
         return new ProfileImageResponse(imageUrl);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new BusinessException(ErrorCode.INVALID_CURRENT_PASSWORD);
+        }
+
+        user.updatePassword(passwordEncoder.encode(request.newPassword()));
     }
 
     @Transactional(readOnly = true)

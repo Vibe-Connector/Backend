@@ -28,6 +28,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USER_002", "이미 사용 중인 이메일입니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "USER_003", "이미 사용 중인 닉네임입니다."),
+    INVALID_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "USER_004", "현재 비밀번호가 올바르지 않습니다."),
 
     // Vibe (VIBE)
     VIBE_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "VIBE_001", "Vibe 세션을 찾을 수 없습니다."),
