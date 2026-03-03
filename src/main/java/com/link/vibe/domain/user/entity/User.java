@@ -87,6 +87,15 @@ public class User {
         return "ACTIVE".equals(this.status);
     }
 
+    public void deactivate() {
+        this.status = "INACTIVE";
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
     public void updateProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
     }
