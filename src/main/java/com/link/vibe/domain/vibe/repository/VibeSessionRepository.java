@@ -30,4 +30,6 @@ public interface VibeSessionRepository extends JpaRepository<VibeSession, Long> 
             "LEFT JOIN FETCH vs.vibeResult " +
             "WHERE vs.sessionId = :sessionId")
     Optional<VibeSession> findByIdWithDetails(@Param("sessionId") Long sessionId);
+
+    Optional<VibeSession> findBySessionIdAndUserId(Long sessionId, Long userId);
 }

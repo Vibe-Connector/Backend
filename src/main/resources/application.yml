@@ -49,3 +49,9 @@ openai:
   model: gpt-4o-mini
   max-tokens: 500
   temperature: 0.8
+  embedding-model: text-embedding-3-small
+  embedding-dimensions: 1536
+
+vibe:
+  recommendation:
+    items-per-category: 3

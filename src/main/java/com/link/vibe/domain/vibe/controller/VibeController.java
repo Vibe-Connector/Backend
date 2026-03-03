@@ -1,6 +1,7 @@
 package com.link.vibe.domain.vibe.controller;
 
 import com.link.vibe.domain.vibe.dto.*;
+import com.link.vibe.domain.vibe.service.VibePromptService;
 import com.link.vibe.domain.vibe.service.VibeService;
 import com.link.vibe.global.common.ApiResponse;
 import com.link.vibe.global.security.SecurityUtil;
@@ -21,6 +22,7 @@ import java.util.List;
 public class VibeController {
 
     private final VibeService vibeService;
+    private final VibePromptService vibePromptService;
 
     @Operation(
             summary = "Vibe 세션 생성",
@@ -77,6 +79,36 @@ public class VibeController {
     public ApiResponse<List<VibeHistoryResponse>> getHistory() {
         Long userId = SecurityUtil.getCurrentUserId();
         return ApiResponse.ok(vibeService.getHistory(userId));
+    }
+
+    @Operation(
+            summary = "Vibe 프롬프트 제출",
+            description = """
+                    세션에 프롬프트를 제출하여 AI 분위기 큐레이션 + 아이템 추천을 실행합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    **처리 흐름:**
+                    1. 세션 상태 검증 (IN_PROGRESS만 허용)
+                    2. 선택 옵션 검증 + vibe_prompts 생성
+                    3. OpenAI 임베딩 생성 + pgvector 유사도 검색
+                    4. OpenAI Chat API 호출 (분위기 문구 + 분석)
+                    5. vibe_results + vibe_items 저장
+                    6. 세션 상태 COMPLETED로 갱신
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "제출 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 옵션 ID 또는 세션이 이미 완료됨"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "세션을 찾을 수 없음")
+    })
+    @PostMapping("/sessions/{sessionId}/prompt")
+    public ApiResponse<VibePromptSubmitResponse> submitPrompt(
+            @Parameter(description = "세션 ID", example = "1")
+            @PathVariable Long sessionId,
+            @Valid @RequestBody VibeCreateRequest request) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return ApiResponse.ok(vibePromptService.submitPrompt(userId, sessionId, request));
     }
 
     @Operation(
