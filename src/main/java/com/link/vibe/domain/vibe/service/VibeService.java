@@ -5,14 +5,18 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.link.vibe.domain.option.entity.*;
 import com.link.vibe.domain.option.repository.*;
+import com.link.vibe.domain.item.repository.ItemTranslationRepository;
 import com.link.vibe.domain.vibe.dto.*;
 import com.link.vibe.domain.vibe.dto.VibeResultResponse.SelectedOptions;
+import com.link.vibe.domain.vibe.entity.VibeItem;
 import com.link.vibe.domain.vibe.entity.VibePrompt;
 import com.link.vibe.domain.vibe.entity.VibeResult;
 import com.link.vibe.domain.vibe.entity.VibeSession;
+import com.link.vibe.domain.vibe.repository.VibeItemRepository;
 import com.link.vibe.domain.vibe.repository.VibePromptRepository;
 import com.link.vibe.domain.vibe.repository.VibeResultRepository;
 import com.link.vibe.domain.vibe.repository.VibeSessionRepository;
+import com.link.vibe.global.i18n.LanguageContext;
 import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +24,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,8 @@ public class VibeService {
     private final VibeSessionRepository vibeSessionRepository;
     private final VibePromptRepository vibePromptRepository;
     private final VibeResultRepository vibeResultRepository;
+    private final VibeItemRepository vibeItemRepository;
+    private final ItemTranslationRepository itemTranslationRepository;
     private final MoodKeywordRepository moodKeywordRepository;
     private final TimeOptionRepository timeOptionRepository;
     private final WeatherOptionRepository weatherOptionRepository;
@@ -183,6 +189,7 @@ public class VibeService {
 
         return new VibeHistoryResponse(
                 session.getSessionId(),
+                result.getResultId(),
                 result.getPhrase(),
                 moodValues,
                 prompt != null && prompt.getTimeOption() != null ? prompt.getTimeOption().getTimeKey() : null,
@@ -191,6 +198,52 @@ public class VibeService {
                 prompt != null && prompt.getCompanionOption() != null ? prompt.getCompanionOption().getCompanionKey() : null,
                 session.getCreatedAt()
         );
+    }
+
+    @Transactional
+    public VibeItemLikeResponse toggleLike(Long vibeItemId) {
+        VibeItem vibeItem = vibeItemRepository.findById(vibeItemId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.VIBE_ITEM_NOT_FOUND));
+        vibeItem.toggleLike();
+        return new VibeItemLikeResponse(vibeItem.getVibeItemId(), vibeItem.getIsUserLiked());
+    }
+
+    public List<CategoryRecommendation> getVibeItems(Long resultId) {
+        if (!vibeResultRepository.existsById(resultId)) {
+            throw new BusinessException(ErrorCode.VIBE_RESULT_NOT_FOUND);
+        }
+
+        List<VibeItem> vibeItems = vibeItemRepository.findByResultIdWithItemDetails(resultId);
+        Long languageId = LanguageContext.getLanguageId();
+
+        Map<String, List<RecommendedItemResponse>> grouped = vibeItems.stream()
+                .collect(Collectors.groupingBy(
+                        vi -> vi.getItem().getCategory().getCategoryKey(),
+                        LinkedHashMap::new,
+                        Collectors.mapping(vi -> {
+                            String itemName = itemTranslationRepository
+                                    .findByItemItemIdAndLanguageLanguageId(vi.getItem().getItemId(), languageId)
+                                    .map(t -> t.getItemValue())
+                                    .orElse(vi.getItem().getItemKey());
+
+                            return new RecommendedItemResponse(
+                                    vi.getItem().getItemId(),
+                                    vi.getItem().getItemKey(),
+                                    itemName,
+                                    vi.getItem().getCategory().getCategoryKey(),
+                                    vi.getItem().getBrand(),
+                                    vi.getItem().getImageUrl(),
+                                    vi.getItem().getExternalLink(),
+                                    vi.getItem().getExternalService(),
+                                    vi.getMatchScore(),
+                                    vi.getRecommendReason()
+                            );
+                        }, Collectors.toList())
+                ));
+
+        return grouped.entrySet().stream()
+                .map(e -> new CategoryRecommendation(e.getKey(), e.getValue()))
+                .toList();
     }
 
     private List<String> resolveMoodValues(String moodKeywordIdsJson) {
