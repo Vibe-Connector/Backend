@@ -1,5 +1,6 @@
 package com.link.vibe.domain.user.controller;
 
+import com.link.vibe.domain.user.dto.ChangePasswordRequest;
 import com.link.vibe.domain.user.dto.ProfileImageResponse;
 import com.link.vibe.domain.user.dto.PublicUserProfileResponse;
 import com.link.vibe.domain.user.dto.UpdateProfileRequest;
@@ -74,6 +75,24 @@ public class UserController {
     public ApiResponse<UserProfileResponse> updateMyProfile(@Valid @RequestBody UpdateProfileRequest request) {
         Long userId = SecurityUtil.getCurrentUserId();
         return ApiResponse.ok(userService.updateMyProfile(userId, request));
+    }
+
+    @Operation(
+            summary = "비밀번호 변경",
+            description = """
+                    현재 비밀번호를 확인한 후 새 비밀번호로 변경합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    **에러:**
+                    - 400 (USER_004): 현재 비밀번호가 올바르지 않음
+                    """
+    )
+    @PutMapping("/me/password")
+    public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        userService.changePassword(userId, request);
+        return ApiResponse.ok(null);
     }
 
     @Operation(
