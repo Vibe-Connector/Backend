@@ -189,6 +189,7 @@ public class VibeService {
 
         return new VibeHistoryResponse(
                 session.getSessionId(),
+                result.getResultId(),
                 result.getPhrase(),
                 moodValues,
                 prompt != null && prompt.getTimeOption() != null ? prompt.getTimeOption().getTimeKey() : null,
