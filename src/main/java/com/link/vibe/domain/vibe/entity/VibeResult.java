@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "vibe_results")
@@ -40,6 +42,9 @@ public class VibeResult {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "vibeResult", cascade = CascadeType.ALL)
+    private List<VibeItem> vibeItems = new ArrayList<>();
 
     @Builder
     public VibeResult(VibeSession vibeSession, String phrase, String aiAnalysis,

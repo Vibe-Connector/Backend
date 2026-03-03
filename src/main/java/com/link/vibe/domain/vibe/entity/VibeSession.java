@@ -52,4 +52,8 @@ public class VibeSession {
         this.status = "COMPLETED";
         this.completedAt = LocalDateTime.now();
     }
+
+    public boolean isInProgress() {
+        return "IN_PROGRESS".equals(this.status);
+    }
 }

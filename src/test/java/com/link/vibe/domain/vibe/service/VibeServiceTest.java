@@ -93,7 +93,7 @@ class VibeServiceTest {
         VibeCreateRequest request = new VibeCreateRequest(List.of(1L, 3L), 3L, 1L, 1L, 1L);
 
         // when
-        VibeResultResponse response = vibeService.createVibe(request);
+        VibeResultResponse response = vibeService.createVibe(1L, request);
 
         // then
         assertThat(response.sessionId()).isEqualTo(1L);
@@ -114,7 +114,7 @@ class VibeServiceTest {
         VibeCreateRequest request = new VibeCreateRequest(List.of(999L), 3L, 1L, 1L, 1L);
 
         // when & then
-        assertThatThrownBy(() -> vibeService.createVibe(request))
+        assertThatThrownBy(() -> vibeService.createVibe(1L, request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("키워드");
     }
@@ -130,7 +130,7 @@ class VibeServiceTest {
         VibeCreateRequest request = new VibeCreateRequest(List.of(1L), 999L, 1L, 1L, 1L);
 
         // when & then
-        assertThatThrownBy(() -> vibeService.createVibe(request))
+        assertThatThrownBy(() -> vibeService.createVibe(1L, request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("유효하지 않은 시간 옵션");
     }
