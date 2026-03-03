@@ -95,6 +95,13 @@ public class UserService {
         user.updatePassword(passwordEncoder.encode(request.newPassword()));
     }
 
+    @Transactional
+    public void deleteAccount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.deactivate();
+    }
+
     @Transactional(readOnly = true)
     public UserSettingsResponse getMySettings(Long userId) {
         UserSettings settings = userSettingsRepository.findByUserUserId(userId)
