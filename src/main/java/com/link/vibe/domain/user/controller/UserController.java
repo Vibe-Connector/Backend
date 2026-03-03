@@ -1,6 +1,7 @@
 package com.link.vibe.domain.user.controller;
 
 import com.link.vibe.domain.auth.dto.SocialLoginRequest;
+import com.link.vibe.domain.user.dto.ChangeNicknameRequest;
 import com.link.vibe.domain.user.dto.ChangePasswordRequest;
 import com.link.vibe.domain.user.dto.ProfileImageResponse;
 import com.link.vibe.domain.user.dto.SocialAccountResponse;
@@ -80,6 +81,23 @@ public class UserController {
     public ApiResponse<UserProfileResponse> updateMyProfile(@Valid @RequestBody UpdateProfileRequest request) {
         Long userId = SecurityUtil.getCurrentUserId();
         return ApiResponse.ok(userService.updateMyProfile(userId, request));
+    }
+
+    @Operation(
+            summary = "닉네임 변경",
+            description = """
+                    현재 로그인된 사용자의 닉네임만 변경합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    **에러:**
+                    - 409 (USER_003): 이미 사용 중인 닉네임
+                    """
+    )
+    @PutMapping("/me/nickname")
+    public ApiResponse<UserProfileResponse> changeNickname(@Valid @RequestBody ChangeNicknameRequest request) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return ApiResponse.ok(userService.changeNickname(userId, request));
     }
 
     @Operation(
