@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -103,6 +104,13 @@ public class UserService {
         }
 
         user.updatePassword(passwordEncoder.encode(request.newPassword()));
+    }
+
+    @Transactional(readOnly = true)
+    public List<SocialAccountResponse> getLinkedSocialAccounts(Long userId) {
+        return socialAccountRepository.findAllByUserUserId(userId).stream()
+                .map(SocialAccountResponse::from)
+                .toList();
     }
 
     @Transactional
