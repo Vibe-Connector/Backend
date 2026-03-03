@@ -651,7 +651,7 @@ CREATE TABLE notifications (
     notification_id BIGINT PRIMARY KEY AUTO_INCREMENT,    -- 알림 고유 식별자
     user_id BIGINT NOT NULL,                               -- 수신 사용자 ID (FK)
     type ENUM('FEED_REACTION', 'FEED_COMMENT', 'FOLLOW',
-              'REPORT_READY', 'SYSTEM') NOT NULL,          -- 알림 유형
+              'VIBE_COMPLETE', 'REPORT_READY', 'SYSTEM') NOT NULL, -- 알림 유형
     title VARCHAR(255) NOT NULL,                           -- 알림 제목
     body TEXT,                                             -- 알림 본문
     link_url VARCHAR(500),                                 -- 클릭 시 이동할 URL/딥링크
