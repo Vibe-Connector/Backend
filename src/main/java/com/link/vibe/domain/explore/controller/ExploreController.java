@@ -1,0 +1,40 @@
+package com.link.vibe.domain.explore.controller;
+
+import com.link.vibe.domain.explore.dto.ExplorePeriod;
+import com.link.vibe.domain.explore.dto.ExploreVibeResponse;
+import com.link.vibe.domain.explore.service.ExploreService;
+import com.link.vibe.global.common.ApiResponse;
+import com.link.vibe.global.common.CursorPageRequest;
+import com.link.vibe.global.common.PageResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@Tag(name = "Explore", description = "탐색 API — 인기 Vibe를 기간별로 무한 스크롤 조회")
+@RestController
+@RequestMapping("/api/v1/explore")
+@RequiredArgsConstructor
+public class ExploreController {
+
+    private final ExploreService exploreService;
+
+    @Operation(
+        summary = "인기 Vibe 탐색",
+        description = "기간별 인기 Vibe를 무한 스크롤로 조회합니다. "
+            + "인기도 = engagement×10 + viewCount + engagement×1000/(viewCount+10). "
+            + "engagement = 반응수 + 댓글수(본인 댓글 제외)"
+    )
+    @GetMapping("/vibes")
+    public ApiResponse<PageResponse<ExploreVibeResponse>> getPopularVibes(
+            @Parameter(description = "기간 필터 (DAY=24시간, WEEK=7일, MONTH=30일)", example = "WEEK")
+            @RequestParam(defaultValue = "WEEK") ExplorePeriod period,
+            @ModelAttribute CursorPageRequest request) {
+        return ApiResponse.ok(exploreService.getPopularVibes(period, request));
+    }
+}
