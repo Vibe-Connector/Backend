@@ -199,6 +199,14 @@ public class VibeService {
         );
     }
 
+    @Transactional
+    public VibeItemLikeResponse toggleLike(Long vibeItemId) {
+        VibeItem vibeItem = vibeItemRepository.findById(vibeItemId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.VIBE_ITEM_NOT_FOUND));
+        vibeItem.toggleLike();
+        return new VibeItemLikeResponse(vibeItem.getVibeItemId(), vibeItem.getIsUserLiked());
+    }
+
     public List<CategoryRecommendation> getVibeItems(Long resultId) {
         if (!vibeResultRepository.existsById(resultId)) {
             throw new BusinessException(ErrorCode.VIBE_RESULT_NOT_FOUND);

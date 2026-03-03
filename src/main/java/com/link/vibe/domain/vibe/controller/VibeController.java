@@ -133,6 +133,27 @@ public class VibeController {
     }
 
     @Operation(
+            summary = "추천 아이템 좋아요 토글",
+            description = """
+                    추천 아이템의 좋아요를 토글합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+
+                    호출할 때마다 좋아요 상태가 반전됩니다 (false → true → false).
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "토글 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "추천 아이템을 찾을 수 없음")
+    })
+    @PostMapping("/items/{vibeItemId}/like")
+    public ApiResponse<VibeItemLikeResponse> toggleLike(
+            @Parameter(description = "Vibe 아이템 ID", example = "1")
+            @PathVariable Long vibeItemId) {
+        return ApiResponse.ok(vibeService.toggleLike(vibeItemId));
+    }
+
+    @Operation(
             summary = "Vibe 상세 조회",
             description = """
                     특정 세션의 Vibe 상세 정보(프롬프트 + 결과)를 조회합니다.
