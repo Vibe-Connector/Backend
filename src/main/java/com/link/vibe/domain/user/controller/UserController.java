@@ -21,6 +21,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Tag(name = "User", description = "사용자 API — 프로필 조회/수정")
 @RestController
 @RequestMapping("/api/v1/users")
@@ -113,6 +115,20 @@ public class UserController {
         Long userId = SecurityUtil.getCurrentUserId();
         userService.deleteAccount(userId);
         return ApiResponse.ok(null);
+    }
+
+    @Operation(
+            summary = "연동된 소셜 계정 목록 조회",
+            description = """
+                    현재 사용자에게 연동된 소셜 계정 목록을 조회합니다.
+
+                    **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
+                    """
+    )
+    @GetMapping("/me/social")
+    public ApiResponse<List<SocialAccountResponse>> getLinkedSocialAccounts() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return ApiResponse.ok(userService.getLinkedSocialAccounts(userId));
     }
 
     @Operation(
