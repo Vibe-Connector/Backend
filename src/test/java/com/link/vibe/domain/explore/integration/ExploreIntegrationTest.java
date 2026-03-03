@@ -340,4 +340,120 @@ class ExploreIntegrationTest {
                     .andExpect(jsonPath("$.data.hasNext").value(true));
         }
     }
+
+    // ═══════════════════════════════════════════
+    // 데이터 정합성 테스트
+    // ═══════════════════════════════════════════
+
+    @Nested
+    @DisplayName("데이터 정합성 테스트")
+    class DataConsistency {
+
+        @Test
+        @DisplayName("피드 삭제(soft delete) 후 Explore 결과에서 제외된다")
+        void deletedFeedExcludedFromExplore() throws Exception {
+            // given
+            Feed feed = createPublicFeed(author, "삭제될피드", 10);
+            flushAndClear();
+
+            // 삭제 전 — Explore에 노출
+            mockMvc.perform(get("/api/v1/explore/vibes")
+                            .param("period", "MONTH")
+                            .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content.length()").value(1));
+
+            // when: soft delete
+            Feed managedFeed = feedRepository.findById(feed.getFeedId()).orElseThrow();
+            managedFeed.softDelete();
+            flushAndClear();
+
+            // then: Explore에서 제외
+            mockMvc.perform(get("/api/v1/explore/vibes")
+                            .param("period", "MONTH")
+                            .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content.length()").value(0));
+        }
+
+        @Test
+        @DisplayName("비공개 전환 후 Explore 결과에서 제외된다")
+        void privateFeedExcludedFromExplore() throws Exception {
+            // given
+            Feed feed = createPublicFeed(author, "비공개전환피드", 10);
+            flushAndClear();
+
+            // 전환 전 — Explore에 노출
+            mockMvc.perform(get("/api/v1/explore/vibes")
+                            .param("period", "MONTH")
+                            .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content.length()").value(1));
+
+            // when: 비공개 전환
+            Feed managedFeed = feedRepository.findById(feed.getFeedId()).orElseThrow();
+            managedFeed.update(managedFeed.getCaption(), false);
+            flushAndClear();
+
+            // then: Explore에서 제외
+            mockMvc.perform(get("/api/v1/explore/vibes")
+                            .param("period", "MONTH")
+                            .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content.length()").value(0));
+        }
+
+        @Test
+        @DisplayName("닉네임 변경 후 Explore 조회 시 새 닉네임이 반영된다")
+        void nicknameChangeReflectedInExplore() throws Exception {
+            // given
+            createPublicFeed(author, "닉네임테스트", 10);
+            flushAndClear();
+
+            // 변경 전 — 기존 닉네임
+            mockMvc.perform(get("/api/v1/explore/vibes")
+                            .param("period", "MONTH")
+                            .param("size", "20"))
+                    .andExpect(jsonPath("$.data.content[0].authorNickname").value("author"));
+
+            // when: 닉네임 변경
+            em.createQuery("UPDATE User u SET u.nickname = :nickname WHERE u.userId = :userId")
+                    .setParameter("nickname", "변경된닉네임")
+                    .setParameter("userId", author.getUserId())
+                    .executeUpdate();
+            flushAndClear();
+
+            // then: 새 닉네임 반영
+            mockMvc.perform(get("/api/v1/explore/vibes")
+                            .param("period", "MONTH")
+                            .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content[0].authorNickname").value("변경된닉네임"));
+        }
+
+        @Test
+        @DisplayName("닉네임 변경 후 피드 상세 조회 시 새 닉네임이 반영된다")
+        void nicknameChangeReflectedInFeedDetail() throws Exception {
+            // given
+            Feed feed = createPublicFeed(author, "피드상세테스트", 5);
+            flushAndClear();
+
+            // 변경 전 — 기존 닉네임
+            mockMvc.perform(get("/api/v1/feeds/{feedId}", feed.getFeedId()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.nickname").value("author"));
+
+            // when: 닉네임 변경
+            em.createQuery("UPDATE User u SET u.nickname = :nickname WHERE u.userId = :userId")
+                    .setParameter("nickname", "새닉네임")
+                    .setParameter("userId", author.getUserId())
+                    .executeUpdate();
+            flushAndClear();
+
+            // then: 새 닉네임 반영
+            mockMvc.perform(get("/api/v1/feeds/{feedId}", feed.getFeedId()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.nickname").value("새닉네임"));
+        }
+    }
 }
