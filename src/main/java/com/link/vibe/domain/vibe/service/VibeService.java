@@ -129,6 +129,7 @@ public class VibeService {
 
         return new VibeResultResponse(
                 session.getSessionId(),
+                result.getResultId(),
                 aiResult.phrase(),
                 aiResult.analysis(),
                 new SelectedOptions(
@@ -138,6 +139,7 @@ public class VibeService {
                         placeOption.getPlaceKey(),
                         companionOption.getCompanionKey()
                 ),
+                Collections.emptyList(),
                 processingTimeMs,
                 session.getCreatedAt()
         );
@@ -165,9 +167,11 @@ public class VibeService {
         VibePrompt prompt = session.getVibePrompt();
         VibeResult result = session.getVibeResult();
         List<String> moodValues = resolveMoodValues(prompt.getMoodKeywordIds());
+        List<CategoryRecommendation> recommendations = getVibeItems(result.getResultId());
 
         return new VibeResultResponse(
                 session.getSessionId(),
+                result.getResultId(),
                 result.getPhrase(),
                 result.getAiAnalysis(),
                 new SelectedOptions(
@@ -177,6 +181,7 @@ public class VibeService {
                         prompt.getPlaceOption() != null ? prompt.getPlaceOption().getPlaceKey() : null,
                         prompt.getCompanionOption() != null ? prompt.getCompanionOption().getCompanionKey() : null
                 ),
+                recommendations,
                 result.getProcessingTimeMs(),
                 session.getCreatedAt()
         );
