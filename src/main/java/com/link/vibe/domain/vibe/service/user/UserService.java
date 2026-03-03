@@ -3,6 +3,7 @@ package com.link.vibe.domain.vibe.service.user;
 import com.link.vibe.domain.auth.dto.SocialLoginRequest;
 import com.link.vibe.domain.auth.oauth.OAuthClientFactory;
 import com.link.vibe.domain.auth.oauth.OAuthUserInfo;
+import com.link.vibe.domain.user.dto.ChangeNicknameRequest;
 import com.link.vibe.domain.user.dto.ChangePasswordRequest;
 import com.link.vibe.domain.user.dto.ProfileImageResponse;
 import com.link.vibe.domain.user.dto.PublicUserProfileResponse;
@@ -92,6 +93,21 @@ public class UserService {
         user.updateProfileImageUrl(imageUrl);
 
         return new ProfileImageResponse(imageUrl);
+    }
+
+    @Transactional
+    public UserProfileResponse changeNickname(Long userId, ChangeNicknameRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (!request.nickname().equals(user.getNickname())) {
+            if (userRepository.existsByNickname(request.nickname())) {
+                throw new BusinessException(ErrorCode.DUPLICATE_NICKNAME);
+            }
+        }
+
+        user.updateProfile(request.nickname(), null, null, null, null, null);
+        return UserProfileResponse.from(user);
     }
 
     @Transactional
