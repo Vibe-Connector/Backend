@@ -81,14 +81,38 @@ public class VibeService {
         VibeSession session = VibeSession.builder().userId(userId).build();
         vibeSessionRepository.save(session);
 
-        // 2. OpenAI 호출
+        // 2. OpenAI 호출 — 시간/날씨 상세 정보 반영
         List<String> moodValues = moodKeywords.stream().map(MoodKeyword::getKeywordValue).toList();
+
+        // hour/minute가 있으면 정밀 시간 문자열 생성
+        String timeDescription = timeOption.getTimeKey();
+        if (request.hour() != null) {
+            String minuteStr = request.minute() != null ? String.format("%02d", request.minute()) : "00";
+            timeDescription = timeOption.getTimeKey() + " (" + request.hour() + ":" + minuteStr + ")";
+        }
+
+        // weatherIntensities가 있으면 날씨 조합 문자열 생성
+        String weatherDescription = weatherOption.getWeatherKey();
+        if (request.weatherIntensities() != null && !request.weatherIntensities().isEmpty()) {
+            List<String> weatherParts = request.weatherIntensities().stream()
+                    .filter(wi -> wi.intensity() > 0)
+                    .map(wi -> {
+                        WeatherOption wo = weatherOptionRepository.findById(wi.weatherId()).orElse(null);
+                        if (wo == null) return null;
+                        return wo.getWeatherKey() + " " + wi.intensity() + "%";
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+            if (!weatherParts.isEmpty()) {
+                weatherDescription = String.join(", ", weatherParts);
+            }
+        }
 
         long startTime = System.currentTimeMillis();
         OpenAiService.VibeResult aiResult = openAiService.generateVibe(
                 moodValues,
-                timeOption.getTimeKey(),
-                weatherOption.getWeatherKey(),
+                timeDescription,
+                weatherDescription,
                 placeOption.getPlaceKey(),
                 companionOption.getCompanionKey()
         );
@@ -96,8 +120,8 @@ public class VibeService {
 
         String finalPrompt = openAiService.buildUserPrompt(
                 moodValues,
-                timeOption.getTimeKey(),
-                weatherOption.getWeatherKey(),
+                timeDescription,
+                weatherDescription,
                 placeOption.getPlaceKey(),
                 companionOption.getCompanionKey()
         );

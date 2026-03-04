@@ -615,7 +615,12 @@ VALUES (1, 1, 1, '포근한', '따뜻하고 아늑한 느낌'),
         2,
         'Melancholic',
         'Feeling of loneliness and solitude'
-    ) ON CONFLICT (keyword_id, language_id) DO NOTHING;
+    ),
+    (16, 11, 1, '로맨틱한', '사랑스럽고 낭만적인 분위기'),
+    (17, 12, 1, '신비로운', '알 수 없는 매혹적인 느낌'),
+    (18, 13, 1, '따뜻한', '마음이 편안하고 온기 있는'),
+    (19, 14, 1, '상쾌한', '가볍고 시원한 에너지'),
+    (20, 15, 1, '사색적인', '깊이 생각에 잠기는 분위기') ON CONFLICT (keyword_id, language_id) DO NOTHING;
 -- [10/44] weather_option_translations (15건: 한국어 10 + 영어 5)
 INSERT INTO weather_option_translations (
         translation_id,
