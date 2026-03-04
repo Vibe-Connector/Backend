@@ -27,6 +27,7 @@ public enum ErrorCode {
     EMAIL_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH_009", "인증 코드가 만료되었습니다."),
     EMAIL_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "AUTH_010", "인증 코드가 일치하지 않습니다."),
     EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "AUTH_011", "이메일 인증이 완료되지 않았습니다."),
+    INVALID_SOCIAL_SIGNUP_TOKEN(HttpStatus.BAD_REQUEST, "AUTH_012", "유효하지 않거나 만료된 소셜 회원가입 토큰입니다."),
 
     // 사용자 (USER)
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다."),
@@ -36,6 +37,7 @@ public enum ErrorCode {
     SOCIAL_ACCOUNT_ALREADY_LINKED(HttpStatus.CONFLICT, "USER_005", "이미 연동된 소셜 계정입니다."),
     SOCIAL_ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_006", "연동된 소셜 계정을 찾을 수 없습니다."),
     CANNOT_UNLINK_LAST_AUTH(HttpStatus.BAD_REQUEST, "USER_007", "마지막 로그인 수단은 해제할 수 없습니다."),
+    SOCIAL_ACCOUNT_NOT_LINKED(HttpStatus.FORBIDDEN, "USER_008", "해당 소셜 계정이 연동되어 있지 않습니다. 설정에서 소셜 계정을 연동해 주세요."),
 
     // Vibe (VIBE)
     VIBE_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "VIBE_001", "Vibe 세션을 찾을 수 없습니다."),
