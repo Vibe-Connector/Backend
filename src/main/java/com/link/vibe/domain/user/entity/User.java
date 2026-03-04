@@ -43,6 +43,12 @@ public class User {
     @Column(name = "preferred_language_id")
     private Long preferredLanguageId;
 
+    @Column(name = "country", length = 10)
+    private String country;
+
+    @Column(name = "timezone", length = 50)
+    private String timezone;
+
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
@@ -66,6 +72,11 @@ public class User {
         this.name = name;
         this.profileImageUrl = profileImageUrl;
         this.status = "ACTIVE";
+    }
+
+    @PostLoad
+    private void normalizeFields() {
+        if (this.gender != null) this.gender = this.gender.toUpperCase();
     }
 
     @PrePersist
@@ -101,12 +112,15 @@ public class User {
     }
 
     public void updateProfile(String nickname, String name, String gender, Integer birthYear,
-                              String profileImageUrl, Long preferredLanguageId) {
+                              String profileImageUrl, Long preferredLanguageId,
+                              String country, String timezone) {
         if (nickname != null) this.nickname = nickname;
         if (name != null) this.name = name;
-        if (gender != null) this.gender = gender;
+        if (gender != null) this.gender = gender.toUpperCase();
         if (birthYear != null) this.birthYear = birthYear;
         if (profileImageUrl != null) this.profileImageUrl = profileImageUrl;
         if (preferredLanguageId != null) this.preferredLanguageId = preferredLanguageId;
+        if (country != null) this.country = country;
+        if (timezone != null) this.timezone = timezone;
     }
 }

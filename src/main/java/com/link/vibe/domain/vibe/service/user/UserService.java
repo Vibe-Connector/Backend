@@ -73,7 +73,9 @@ public class UserService {
                 request.gender(),
                 request.birthYear(),
                 request.profileImageUrl(),
-                request.preferredLanguageId()
+                request.preferredLanguageId(),
+                request.country(),
+                request.timezone()
         );
 
         return UserProfileResponse.from(user);
@@ -106,7 +108,7 @@ public class UserService {
             }
         }
 
-        user.updateProfile(request.nickname(), null, null, null, null, null);
+        user.updateProfile(request.nickname(), null, null, null, null, null, null, null);
         return UserProfileResponse.from(user);
     }
 

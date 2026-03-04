@@ -25,5 +25,13 @@ public record UpdateProfileRequest(
         String profileImageUrl,
 
         @Schema(description = "선호 언어 ID", example = "1")
-        Long preferredLanguageId
+        Long preferredLanguageId,
+
+        @Schema(description = "국가 코드 (ISO 3166-1 alpha-2)", example = "kr")
+        @Size(max = 10, message = "국가 코드는 10자 이하여야 합니다.")
+        String country,
+
+        @Schema(description = "타임존 (IANA)", example = "Asia/Seoul")
+        @Size(max = 50, message = "타임존은 50자 이하여야 합니다.")
+        String timezone
 ) {}

@@ -228,6 +228,8 @@ CREATE TABLE users (
     birth_year INT,                                        -- 출생 연도
     profile_image_url VARCHAR(500),                        -- 프로필 이미지 URL
     preferred_language_id BIGINT,                           -- 선호 언어 ID (FK → languages)
+    country VARCHAR(10),                                     -- 국가 코드 (ISO 3166-1 alpha-2, 예: 'kr')
+    timezone VARCHAR(50),                                    -- 타임존 (IANA, 예: 'Asia/Seoul')
     status ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED',
                 'DELETED') DEFAULT 'ACTIVE',               -- 계정 상태
     last_login_at TIMESTAMP,                               -- 최근 로그인 시각
