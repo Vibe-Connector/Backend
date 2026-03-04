@@ -90,7 +90,7 @@ class VibeServiceTest {
         given(vibePromptRepository.save(any(VibePrompt.class))).willAnswer(invocation -> invocation.getArgument(0));
         given(vibeResultRepository.save(any(VibeResult.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        VibeCreateRequest request = new VibeCreateRequest(List.of(1L, 3L), 3L, 1L, 1L, 1L);
+        VibeCreateRequest request = new VibeCreateRequest(List.of(1L, 3L), 3L, 1L, 1L, 1L, null, null, null);
 
         // when
         VibeResultResponse response = vibeService.createVibe(1L, request);
@@ -111,7 +111,7 @@ class VibeServiceTest {
         // given
         given(moodKeywordRepository.findAllById(List.of(999L))).willReturn(List.of());
 
-        VibeCreateRequest request = new VibeCreateRequest(List.of(999L), 3L, 1L, 1L, 1L);
+        VibeCreateRequest request = new VibeCreateRequest(List.of(999L), 3L, 1L, 1L, 1L, null, null, null);
 
         // when & then
         assertThatThrownBy(() -> vibeService.createVibe(1L, request))
@@ -127,7 +127,7 @@ class VibeServiceTest {
         given(moodKeywordRepository.findAllById(List.of(1L))).willReturn(List.of(mood));
         given(timeOptionRepository.findById(999L)).willReturn(Optional.empty());
 
-        VibeCreateRequest request = new VibeCreateRequest(List.of(1L), 999L, 1L, 1L, 1L);
+        VibeCreateRequest request = new VibeCreateRequest(List.of(1L), 999L, 1L, 1L, 1L, null, null, null);
 
         // when & then
         assertThatThrownBy(() -> vibeService.createVibe(1L, request))

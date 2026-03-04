@@ -78,9 +78,31 @@ public class VibePromptService {
         List<String> moodValues = moodKeywords.stream()
                 .map(MoodKeyword::getKeywordValue).toList();
 
-        // 3. 프롬프트 저장
+        // 3. 프롬프트 저장 — hour/minute, weatherIntensities 반영
+        String timeDescription = timeOption.getTimeKey();
+        if (request.hour() != null) {
+            String minuteStr = request.minute() != null ? String.format("%02d", request.minute()) : "00";
+            timeDescription = timeOption.getTimeKey() + " (" + request.hour() + ":" + minuteStr + ")";
+        }
+
+        String weatherDescription = weatherOption.getWeatherKey();
+        if (request.weatherIntensities() != null && !request.weatherIntensities().isEmpty()) {
+            List<String> weatherParts = request.weatherIntensities().stream()
+                    .filter(wi -> wi.intensity() > 0)
+                    .map(wi -> {
+                        WeatherOption wo = weatherOptionRepository.findById(wi.weatherId()).orElse(null);
+                        if (wo == null) return null;
+                        return wo.getWeatherKey() + " " + wi.intensity() + "%";
+                    })
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            if (!weatherParts.isEmpty()) {
+                weatherDescription = String.join(", ", weatherParts);
+            }
+        }
+
         String finalPrompt = openAiService.buildUserPrompt(
-                moodValues, timeOption.getTimeKey(), weatherOption.getWeatherKey(),
+                moodValues, timeDescription, weatherDescription,
                 placeOption.getPlaceKey(), companionOption.getCompanionKey());
 
         VibePrompt prompt = VibePrompt.builder()
@@ -97,7 +119,7 @@ public class VibePromptService {
         // 4. OpenAI Chat API 호출 (분위기 문구 + 분석)
         long startTime = System.currentTimeMillis();
         OpenAiService.VibeResult aiResult = openAiService.generateVibe(
-                moodValues, timeOption.getTimeKey(), weatherOption.getWeatherKey(),
+                moodValues, timeDescription, weatherDescription,
                 placeOption.getPlaceKey(), companionOption.getCompanionKey());
 
         // 5. 아이템 추천 (pgvector 유사도 검색)
