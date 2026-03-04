@@ -8,6 +8,7 @@ import com.link.vibe.domain.auth.dto.SendVerificationCodeRequest;
 import com.link.vibe.domain.auth.dto.SignupRequest;
 import com.link.vibe.domain.auth.dto.SocialLoginRequest;
 import com.link.vibe.domain.auth.dto.SocialLoginResponse;
+import com.link.vibe.domain.auth.dto.SocialSignupRequest;
 import com.link.vibe.domain.auth.dto.TokenResponse;
 import com.link.vibe.domain.auth.dto.VerifyCodeRequest;
 import com.link.vibe.domain.auth.dto.VerifyCodeResponse;
@@ -207,5 +208,29 @@ public class AuthController {
             @PathVariable String provider,
             @Valid @RequestBody SocialLoginRequest request) {
         return ApiResponse.ok(authService.socialLogin(provider, request));
+    }
+
+    @Operation(
+            summary = "소셜 회원가입",
+            description = """
+                    소셜 로그인 후 신규 유저가 닉네임/비밀번호를 설정하여 회원가입합니다.
+
+                    **흐름:**
+                    1. 소셜 로그인 API 호출 → isNewUser=true, socialSignupToken 반환
+                    2. 프론트엔드에서 닉네임/비밀번호 입력 폼 표시
+                    3. socialSignupToken + 닉네임 + 비밀번호를 이 API로 전달
+                    4. 유저 생성 + 소셜 계정 연동 + JWT 발급
+
+                    **socialSignupToken:** 소셜 로그인 시 발급된 임시 토큰 (15분 유효)
+
+                    **에러:**
+                    - 400 (AUTH_012): 유효하지 않거나 만료된 소셜 회원가입 토큰
+                    - 409 (USER_002): 이미 사용 중인 이메일
+                    - 409 (USER_003): 이미 사용 중인 닉네임
+                    """
+    )
+    @PostMapping("/social-signup")
+    public ApiResponse<TokenResponse> socialSignup(@Valid @RequestBody SocialSignupRequest request) {
+        return ApiResponse.ok(authService.socialSignup(request));
     }
 }

@@ -44,7 +44,9 @@ public class NaverOAuthClient implements OAuthClient {
         Map<String, Object> tokenResponse = exchangeToken(authorizationCode);
         String accessToken = (String) tokenResponse.get("access_token");
         String refreshToken = (String) tokenResponse.get("refresh_token");
-        Number expiresIn = (Number) tokenResponse.get("expires_in");
+        Object expiresInRaw = tokenResponse.get("expires_in");
+        Number expiresIn = expiresInRaw instanceof Number n ? n
+                : expiresInRaw != null ? Long.parseLong(String.valueOf(expiresInRaw)) : null;
 
         // 2. 사용자 정보 조회
         HttpHeaders headers = new HttpHeaders();
