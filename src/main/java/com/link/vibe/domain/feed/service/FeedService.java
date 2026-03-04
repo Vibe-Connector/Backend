@@ -76,8 +76,15 @@ public class FeedService {
         feed.softDelete();
     }
 
+    @Transactional
     public FeedResponse getFeedDetail(Long feedId, Long currentUserId) {
         Feed feed = findFeed(feedId);
+
+        // 타인 게시물 조회 시에만 조회수 증가 (비인증 또는 본인이 아닌 경우)
+        if (currentUserId == null || !currentUserId.equals(feed.getUser().getUserId())) {
+            feed.incrementViewCount();
+        }
+
         return toFeedResponse(feed, currentUserId);
     }
 

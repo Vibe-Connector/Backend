@@ -618,7 +618,7 @@ CREATE TABLE archive_folders (
     folder_id BIGINT PRIMARY KEY AUTO_INCREMENT,          -- 폴더 고유 식별자
     user_id BIGINT NOT NULL,                               -- 사용자 ID (FK)
     folder_name VARCHAR(100) NOT NULL,                     -- 폴더명
-    folder_type ENUM('VIBE', 'ITEM') NOT NULL DEFAULT 'VIBE',  -- 폴더 타입 (VIBE: Vibe 결과용, ITEM: 개별 아이템용)
+    folder_type VARCHAR(10) NOT NULL DEFAULT 'VIBE',            -- 폴더 타입 (VIBE: Vibe 결과용, ITEM: 개별 아이템용)
     thumbnail_url VARCHAR(500),                            -- 폴더 썸네일 URL (기본: 첫 저장 사진, 유저 업로드 가능)
     sort_order INT DEFAULT 0,                              -- 정렬 순서
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,        -- 생성 시각

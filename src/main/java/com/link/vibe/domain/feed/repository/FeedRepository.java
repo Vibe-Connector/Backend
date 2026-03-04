@@ -30,7 +30,7 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
     @Query(value =
         "SELECT f.feed_id, f.caption, f.view_count, f.created_at, " +
         "       u.user_id AS author_id, u.nickname AS author_nickname, u.profile_image_url, " +
-        "       vr.generated_image_url, " +
+        "       vr.generated_image_url, vr.result_id, " +
         "       COALESCE(r.reaction_cnt, 0) AS reaction_count, " +
         "       COALESCE(c.comment_cnt, 0) AS comment_count, " +
         "       (COALESCE(r.reaction_cnt, 0) + COALESCE(c.comment_cnt, 0)) * 10 " +
