@@ -1,5 +1,6 @@
 package com.link.vibe.domain.notification.listener;
 
+import com.link.vibe.config.TestMailConfig;
 import com.link.vibe.config.TestRedisConfig;
 import com.link.vibe.config.TestS3Config;
 import com.link.vibe.domain.feed.entity.Feed;
@@ -35,7 +36,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@Import({ TestRedisConfig.class, TestS3Config.class })
+@Import({ TestRedisConfig.class, TestS3Config.class, TestMailConfig.class })
 @Transactional
 @DisplayName("NotificationEventListener — 리스너 단위 테스트 (Layer 1)")
 class NotificationEventListenerTest {

@@ -23,6 +23,10 @@ public enum ErrorCode {
     SOCIAL_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_005", "소셜 로그인에 실패했습니다."),
     UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_006", "지원하지 않는 소셜 로그인 제공자입니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_007", "유효하지 않은 Refresh Token입니다."),
+    EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_008", "인증 코드 발송에 실패했습니다."),
+    EMAIL_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH_009", "인증 코드가 만료되었습니다."),
+    EMAIL_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "AUTH_010", "인증 코드가 일치하지 않습니다."),
+    EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "AUTH_011", "이메일 인증이 완료되지 않았습니다."),
 
     // 사용자 (USER)
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다."),

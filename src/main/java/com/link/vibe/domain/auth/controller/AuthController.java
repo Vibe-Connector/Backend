@@ -4,10 +4,14 @@ import com.link.vibe.domain.auth.dto.CheckEmailResponse;
 import com.link.vibe.domain.auth.dto.CheckNicknameResponse;
 import com.link.vibe.domain.auth.dto.LoginRequest;
 import com.link.vibe.domain.auth.dto.RefreshRequest;
+import com.link.vibe.domain.auth.dto.SendVerificationCodeRequest;
 import com.link.vibe.domain.auth.dto.SignupRequest;
 import com.link.vibe.domain.auth.dto.SocialLoginRequest;
 import com.link.vibe.domain.auth.dto.SocialLoginResponse;
 import com.link.vibe.domain.auth.dto.TokenResponse;
+import com.link.vibe.domain.auth.dto.VerifyCodeRequest;
+import com.link.vibe.domain.auth.dto.VerifyCodeResponse;
+import com.link.vibe.domain.auth.service.EmailVerificationService;
 import com.link.vibe.domain.vibe.service.auth.AuthService;
 import com.link.vibe.global.common.ApiResponse;
 import com.link.vibe.global.security.SecurityUtil;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
 
     @Operation(
             summary = "이메일 회원가입",
@@ -130,6 +135,50 @@ public class AuthController {
     public ApiResponse<CheckNicknameResponse> checkNickname(@RequestParam String nickname) {
         boolean available = authService.checkNicknameAvailable(nickname);
         return ApiResponse.ok(new CheckNicknameResponse(available));
+    }
+
+    @Operation(
+            summary = "이메일 인증 코드 발송",
+            description = """
+                    입력된 이메일로 6자리 인증 코드를 발송합니다.
+
+                    **흐름:**
+                    1. 이메일 중복 확인 (이미 가입된 이메일이면 409 에러)
+                    2. 6자리 랜덤 인증 코드 생성
+                    3. Redis에 5분 TTL로 저장
+                    4. 이메일로 인증 코드 발송
+
+                    **에러:**
+                    - 409 (USER_002): 이미 사용 중인 이메일
+                    - 500 (AUTH_008): 이메일 발송 실패
+                    """
+    )
+    @PostMapping("/send-verification-code")
+    public ApiResponse<Void> sendVerificationCode(@Valid @RequestBody SendVerificationCodeRequest request) {
+        // 이메일 중복 확인
+        authService.checkEmailAvailableOrThrow(request.email());
+        // 인증 코드 발송
+        emailVerificationService.sendVerificationCode(request.email());
+        return ApiResponse.ok(null);
+    }
+
+    @Operation(
+            summary = "이메일 인증 코드 검증",
+            description = """
+                    발송된 인증 코드를 검증합니다.
+
+                    **성공 시:** verified=true를 반환하고, 해당 이메일은 10분간 인증 완료 상태로 유지됩니다.
+                    회원가입 시 이메일 인증 완료 여부를 확인합니다.
+
+                    **에러:**
+                    - 400 (AUTH_009): 인증 코드 만료
+                    - 400 (AUTH_010): 인증 코드 불일치
+                    """
+    )
+    @PostMapping("/verify-code")
+    public ApiResponse<VerifyCodeResponse> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
+        boolean verified = emailVerificationService.verifyCode(request.email(), request.code());
+        return ApiResponse.ok(new VerifyCodeResponse(verified));
     }
 
     @Operation(

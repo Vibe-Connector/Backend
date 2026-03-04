@@ -9,6 +9,7 @@ import com.link.vibe.domain.auth.dto.TokenResponse;
 import com.link.vibe.domain.auth.oauth.OAuthClient;
 import com.link.vibe.domain.auth.oauth.OAuthClientFactory;
 import com.link.vibe.domain.auth.oauth.OAuthUserInfo;
+import com.link.vibe.domain.auth.service.EmailVerificationService;
 import com.link.vibe.domain.user.entity.SocialAccount;
 import com.link.vibe.domain.user.entity.User;
 import com.link.vibe.domain.user.entity.UserSettings;
@@ -38,9 +39,15 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final OAuthClientFactory oAuthClientFactory;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public TokenResponse signup(SignupRequest request) {
+        // 이메일 인증 완료 여부 확인
+        if (!emailVerificationService.isVerified(request.email())) {
+            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
         if (userRepository.existsByEmail(request.email())) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
@@ -236,6 +243,16 @@ public class AuthService {
     @Transactional(readOnly = true)
     public boolean checkEmailAvailable(String email) {
         return !userRepository.existsByEmail(email);
+    }
+
+    /**
+     * 이메일 사용 가능 여부를 확인하고, 이미 사용 중이면 예외를 던집니다.
+     */
+    @Transactional(readOnly = true)
+    public void checkEmailAvailableOrThrow(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+        }
     }
 
     @Transactional(readOnly = true)

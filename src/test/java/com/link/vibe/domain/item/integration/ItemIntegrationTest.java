@@ -1,5 +1,6 @@
 package com.link.vibe.domain.item.integration;
 
+import com.link.vibe.config.TestMailConfig;
 import com.link.vibe.config.TestRedisConfig;
 import com.link.vibe.config.TestS3Config;
 import com.link.vibe.domain.item.entity.*;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({TestRedisConfig.class, TestS3Config.class})
+@Import({TestRedisConfig.class, TestS3Config.class, TestMailConfig.class})
 @Transactional
 class ItemIntegrationTest {
 

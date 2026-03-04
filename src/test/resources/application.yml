@@ -40,6 +40,10 @@ cloud:
       access-key:
       secret-key:
 
+email:
+  verification:
+    expiration: 300000
+
 openai:
   api-key: test-key
   model: gpt-4o-mini

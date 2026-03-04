@@ -1,6 +1,7 @@
 package com.link.vibe.domain.feed.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.link.vibe.config.TestMailConfig;
 import com.link.vibe.config.TestRedisConfig;
 import com.link.vibe.config.TestS3Config;
 import com.link.vibe.domain.feed.dto.CommentCreateRequest;
@@ -36,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({TestRedisConfig.class, TestS3Config.class})
+@Import({TestRedisConfig.class, TestS3Config.class, TestMailConfig.class})
 @Transactional
 class FeedIntegrationTest {
 
