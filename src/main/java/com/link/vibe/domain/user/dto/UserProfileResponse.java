@@ -32,6 +32,12 @@ public record UserProfileResponse(
         @Schema(description = "선호 언어 ID", example = "1")
         Long preferredLanguageId,
 
+        @Schema(description = "국가 코드", example = "kr")
+        String country,
+
+        @Schema(description = "타임존", example = "Asia/Seoul")
+        String timezone,
+
         @Schema(description = "마지막 로그인 시각")
         LocalDateTime lastLoginAt,
 
@@ -48,6 +54,8 @@ public record UserProfileResponse(
                 user.getBirthYear(),
                 user.getProfileImageUrl(),
                 user.getPreferredLanguageId(),
+                user.getCountry(),
+                user.getTimezone(),
                 user.getLastLoginAt(),
                 user.getCreatedAt()
         );
