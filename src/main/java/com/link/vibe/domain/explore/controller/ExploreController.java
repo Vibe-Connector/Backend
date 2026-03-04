@@ -6,6 +6,7 @@ import com.link.vibe.domain.explore.service.ExploreService;
 import com.link.vibe.global.common.ApiResponse;
 import com.link.vibe.global.common.CursorPageRequest;
 import com.link.vibe.global.common.PageResponse;
+import com.link.vibe.global.security.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -30,7 +31,7 @@ public class ExploreController {
             description = """
                     기간별 인기 Vibe를 무한 스크롤로 조회합니다.
 
-                    **인증 불필요:** 공개 API입니다.
+                    **선택적 인증:** 비인증 시에도 조회 가능하며, 인증 시 isArchived/archiveId가 포함됩니다.
 
                     **인기도 공식:** engagement×10 + viewCount + engagement×1000/(viewCount+10)
                     engagement = 반응수 + 댓글수 (본인 댓글 제외)
@@ -48,6 +49,7 @@ public class ExploreController {
             @Parameter(description = "기간 필터 (DAY=24시간, WEEK=7일, MONTH=30일)", example = "WEEK")
             @RequestParam(defaultValue = "WEEK") ExplorePeriod period,
             @ModelAttribute CursorPageRequest request) {
-        return ApiResponse.ok(exploreService.getPopularVibes(period, request));
+        Long currentUserId = SecurityUtil.getCurrentUserIdOrNull();
+        return ApiResponse.ok(exploreService.getPopularVibes(period, request, currentUserId));
     }
 }

@@ -9,6 +9,9 @@ public record ExploreVibeResponse(
     @Schema(description = "피드 ID", example = "42")
     Long feedId,
 
+    @Schema(description = "Vibe 결과 ID", example = "15")
+    Long resultId,
+
     @Schema(description = "Vibe 결과 이미지 URL", example = "https://cdn.example.com/vibes/img_42.png")
     String generatedImageUrl,
 
@@ -37,5 +40,11 @@ public record ExploreVibeResponse(
     Long popularityScore,
 
     @Schema(description = "피드 생성 시각", example = "2026-03-02T14:30:00")
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+
+    @Schema(description = "현재 사용자가 이 Vibe를 아카이브했는지 여부 (비인증 시 false)")
+    Boolean isArchived,
+
+    @Schema(description = "아카이브 ID (아카이브하지 않은 경우 null)")
+    Long archiveId
 ) {}
