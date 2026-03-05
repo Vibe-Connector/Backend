@@ -6,12 +6,14 @@ import com.link.vibe.domain.item.repository.ItemVectorRepository;
 import com.link.vibe.domain.vibe.service.EmbeddingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.*;
 
 @Component
+@ConditionalOnProperty(name = "vibe.recommendation.strategy", havingValue = "pgvector")
 @RequiredArgsConstructor
 @Slf4j
 public class PgVectorRecommendationStrategy implements ItemRecommendationStrategy {
@@ -45,7 +47,8 @@ public class PgVectorRecommendationStrategy implements ItemRecommendationStrateg
                                 (String) row[3],
                                 (String) row[4],
                                 (String) row[5],
-                                (String) row[6]
+                                (String) row[6],
+                                null
                         ))
                         .toList();
 

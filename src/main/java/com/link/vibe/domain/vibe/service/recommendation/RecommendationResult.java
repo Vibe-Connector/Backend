@@ -10,5 +10,6 @@ public record RecommendationResult(
         String brand,
         String imageUrl,
         String externalLink,
-        String externalService
+        String externalService,
+        String recommendReason
 ) {}
