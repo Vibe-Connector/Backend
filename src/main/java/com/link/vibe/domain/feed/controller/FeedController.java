@@ -13,8 +13,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.TimeUnit;
 
 @Tag(name = "Feeds", description = "피드 API — 피드 CRUD, 반응 토글, 댓글/대댓글, 좋아요")
 @RestController
@@ -145,11 +149,14 @@ public class FeedController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     @GetMapping("/api/v1/feeds")
-    public ApiResponse<PageResponse<FeedResponse>> getFeedTimeline(
+    public ResponseEntity<ApiResponse<PageResponse<FeedResponse>>> getFeedTimeline(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @ModelAttribute CursorPageRequest pageRequest) {
         Long currentUserId = (userDetails != null) ? userDetails.getUserId() : null;
-        return ApiResponse.ok(feedService.getFeedTimeline(currentUserId, pageRequest));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS)
+                        .staleWhileRevalidate(60, TimeUnit.SECONDS))
+                .body(ApiResponse.ok(feedService.getFeedTimeline(currentUserId, pageRequest)));
     }
 
     @Operation(
@@ -180,11 +187,16 @@ public class FeedController {
     @Operation(
             summary = "피드 반응 토글",
             description = """
-                    피드에 반응을 토글합니다 (이미 있으면 삭제, 없으면 추가).
+                    피드에 반응을 토글합니다.
+                    한 유저는 한 피드에 하나의 반응만 가능합니다.
+
+                    - 반응이 없으면 추가
+                    - 같은 반응 타입이면 삭제 (토글 off)
+                    - 다른 반응 타입이면 교체
 
                     **인증 필요:** Authorization 헤더에 Bearer Access Token을 포함해야 합니다.
 
-                    반응 추가 시 FeedReactionEvent가 발행되어 피드 소유자에게 알림이 전송됩니다.
+                    반응 추가/교체 시 FeedReactionEvent가 발행되어 피드 소유자에게 알림이 전송됩니다.
                     본인 피드에 반응 시 알림은 발송되지 않습니다.
 
                     **에러:**
@@ -202,6 +214,27 @@ public class FeedController {
             @Parameter(description = "피드 ID", example = "1") @PathVariable Long feedId,
             @Parameter(description = "반응 유형", example = "LIKE") @RequestParam ReactionType reactionType) {
         return ApiResponse.ok(feedService.toggleReaction(userDetails.getUserId(), feedId, reactionType));
+    }
+
+    @Operation(
+            summary = "피드 반응 사용자 목록",
+            description = """
+                    피드에 반응한 사용자 목록을 조회합니다.
+                    각 사용자의 프로필 이미지, 닉네임, 반응 유형을 포함합니다.
+
+                    **인증 선택:** 비인증 시에도 조회 가능합니다.
+
+                    **에러:**
+                    - 404 (FEED_001): 피드를 찾을 수 없음
+                    """)
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "피드를 찾을 수 없음")
+    })
+    @GetMapping("/api/v1/feeds/{feedId}/reactions/users")
+    public ApiResponse<java.util.List<ReactionUserResponse>> getReactionUsers(
+            @Parameter(description = "피드 ID", example = "1") @PathVariable Long feedId) {
+        return ApiResponse.ok(feedService.getReactionUsers(feedId));
     }
 
     // ── 댓글 ──

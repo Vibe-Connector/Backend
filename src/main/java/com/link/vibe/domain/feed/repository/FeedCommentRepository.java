@@ -22,4 +22,9 @@ public interface FeedCommentRepository extends JpaRepository<FeedComment, Long> 
     List<FeedComment> findByParentCommentCommentIdOrderByCommentIdAsc(Long parentCommentId);
 
     long countByFeedFeedId(Long feedId);
+
+    // 배치 카운트 (N+1 최적화)
+    @Query("SELECT c.feed.feedId, COUNT(c) FROM FeedComment c " +
+           "WHERE c.feed.feedId IN :feedIds GROUP BY c.feed.feedId")
+    List<Object[]> countByFeedFeedIdIn(@Param("feedIds") List<Long> feedIds);
 }

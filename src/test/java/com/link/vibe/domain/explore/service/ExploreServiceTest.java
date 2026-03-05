@@ -1,5 +1,6 @@
 package com.link.vibe.domain.explore.service;
 
+import com.link.vibe.domain.archive.repository.ArchiveVibeRepository;
 import com.link.vibe.domain.explore.dto.ExplorePeriod;
 import com.link.vibe.domain.explore.dto.ExploreVibeResponse;
 import com.link.vibe.domain.feed.repository.FeedRepository;
@@ -35,6 +36,9 @@ class ExploreServiceTest {
     @Mock
     private FeedRepository feedRepository;
 
+    @Mock
+    private ArchiveVibeRepository archiveVibeRepository;
+
     // ── 테스트 헬퍼 ──
 
     private CursorPageRequest createPageRequest(String cursor, int size) {
@@ -46,13 +50,14 @@ class ExploreServiceTest {
 
     private Object[] createRow(Long feedId, String caption, Integer viewCount,
                                 Long authorId, String nickname, String profileImageUrl,
-                                String imageUrl, Long reactionCnt, Long commentCnt,
+                                String imageUrl, Long resultId,
+                                Long reactionCnt, Long commentCnt,
                                 Long score) {
         return new Object[]{
             feedId, caption, viewCount,
             Timestamp.valueOf(LocalDateTime.now()),
             authorId, nickname, profileImageUrl,
-            imageUrl,
+            imageUrl, resultId,
             reactionCnt, commentCnt, score
         };
     }
@@ -71,8 +76,8 @@ class ExploreServiceTest {
             // given
             CursorPageRequest request = createPageRequest(null, 20);
             List<Object[]> rows = List.of(
-                createRow(1L, "피드1", 100, 10L, "user1", null, "img1.png", 5L, 3L, 180L),
-                createRow(2L, "피드2", 50, 11L, "user2", null, "img2.png", 2L, 1L, 80L)
+                createRow(1L, "피드1", 100, 10L, "user1", null, "img1.png", 100L, 5L, 3L, 180L),
+                createRow(2L, "피드2", 50, 11L, "user2", null, "img2.png", 200L, 2L, 1L, 80L)
             );
 
             given(feedRepository.findPopularFeeds(
@@ -81,7 +86,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.WEEK, request);
+                exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L);
 
             // then
             assertThat(result.content()).hasSize(2);
@@ -111,7 +116,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.MONTH, request);
+                exploreService.getPopularVibes(ExplorePeriod.MONTH, request, 1L);
 
             // then
             verify(feedRepository).findPopularFeeds(
@@ -132,7 +137,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.DAY, request);
+                exploreService.getPopularVibes(ExplorePeriod.DAY, request, 1L);
 
             // then
             assertThat(result.content()).isEmpty();
@@ -147,9 +152,9 @@ class ExploreServiceTest {
             CursorPageRequest request = createPageRequest(null, 2);
             // getFetchSize() = 2 + 1 = 3 → 3개 반환하면 hasNext=true
             List<Object[]> rows = List.of(
-                createRow(10L, "A", 50, 1L, "u1", null, "i1", 3L, 2L, 500L),
-                createRow(20L, "B", 30, 2L, "u2", null, "i2", 1L, 0L, 200L),
-                createRow(30L, "C", 10, 3L, "u3", null, "i3", 0L, 0L, 10L)
+                createRow(10L, "A", 50, 1L, "u1", null, "i1", 300L, 3L, 2L, 500L),
+                createRow(20L, "B", 30, 2L, "u2", null, "i2", 301L, 1L, 0L, 200L),
+                createRow(30L, "C", 10, 3L, "u3", null, "i3", 302L, 0L, 0L, 10L)
             );
 
             given(feedRepository.findPopularFeeds(
@@ -158,7 +163,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.WEEK, request);
+                exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L);
 
             // then
             assertThat(result.content()).hasSize(2);
@@ -177,11 +182,11 @@ class ExploreServiceTest {
                 .willReturn(Collections.emptyList());
 
             // when & then - DAY
-            exploreService.getPopularVibes(ExplorePeriod.DAY, request);
+            exploreService.getPopularVibes(ExplorePeriod.DAY, request, 1L);
             // when & then - WEEK
-            exploreService.getPopularVibes(ExplorePeriod.WEEK, request);
+            exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L);
             // when & then - MONTH
-            exploreService.getPopularVibes(ExplorePeriod.MONTH, request);
+            exploreService.getPopularVibes(ExplorePeriod.MONTH, request, 1L);
 
             verify(feedRepository, org.mockito.Mockito.times(3)).findPopularFeeds(
                 any(LocalDateTime.class), any(), any(), any(Pageable.class));
@@ -195,7 +200,7 @@ class ExploreServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                exploreService.getPopularVibes(ExplorePeriod.WEEK, request))
+                exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L))
                 .isInstanceOf(Exception.class);
         }
 
@@ -205,7 +210,7 @@ class ExploreServiceTest {
             // given
             CursorPageRequest request = createPageRequest(null, 20);
             List<Object[]> rows = new java.util.ArrayList<>();
-            rows.add(createRow(1L, null, 0, 10L, "user1", null, null, 0L, 0L, 0L));
+            rows.add(createRow(1L, null, 0, 10L, "user1", null, null, 400L, 0L, 0L, 0L));
 
             given(feedRepository.findPopularFeeds(
                 any(LocalDateTime.class), any(), any(), any(Pageable.class)))
@@ -213,7 +218,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.WEEK, request);
+                exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L);
 
             // then
             assertThat(result.content()).hasSize(1);

@@ -419,13 +419,13 @@ class FeedIntegrationTest {
         }
 
         @Test
-        @DisplayName("서로 다른 반응 유형은 독립적으로 동작한다")
-        void differentReactionTypes() throws Exception {
+        @DisplayName("다른 반응 유형을 선택하면 기존 반응이 교체된다")
+        void differentReactionTypes_replaces() throws Exception {
             Feed feed = createFeed(testUser, vibeResult, "피드", true);
             feedReactionRepository.save(FeedReaction.create(feed, otherUser, ReactionType.LIKE));
             flushAndClear();
 
-            // LOVE 추가 (LIKE와 독립)
+            // LOVE로 교체 (LIKE → LOVE)
             mockMvc.perform(post("/api/v1/feeds/{feedId}/reactions", feed.getFeedId())
                             .header("Authorization", bearer(otherAccessToken))
                             .param("reactionType", "LOVE"))

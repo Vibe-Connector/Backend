@@ -20,8 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -90,12 +89,10 @@ public class FeedService {
 
     public PageResponse<FeedResponse> getFeedTimeline(Long currentUserId, CursorPageRequest pageRequest) {
         Long cursorId = pageRequest.hasCursor() ? Long.parseLong(pageRequest.getCursor()) : null;
-        List<Feed> feeds = feedRepository.findPublicFeeds(
+        List<Feed> feeds = feedRepository.findPublicFeedsWithFetch(
                 cursorId, PageRequest.of(0, pageRequest.getFetchSize()));
 
-        List<FeedResponse> responses = feeds.stream()
-                .map(f -> toFeedResponse(f, currentUserId))
-                .toList();
+        List<FeedResponse> responses = toFeedResponses(feeds, currentUserId);
 
         return PageResponse.of(responses, pageRequest.getEffectiveSize(),
                 r -> String.valueOf(r.feedId()));
@@ -104,32 +101,41 @@ public class FeedService {
     public PageResponse<FeedResponse> getUserFeeds(Long userId, Long currentUserId,
                                                     CursorPageRequest pageRequest) {
         Long cursorId = pageRequest.hasCursor() ? Long.parseLong(pageRequest.getCursor()) : null;
-        List<Feed> feeds = feedRepository.findByUserId(
+        List<Feed> feeds = feedRepository.findByUserIdWithFetch(
                 userId, cursorId, PageRequest.of(0, pageRequest.getFetchSize()));
 
         boolean isOwner = userId.equals(currentUserId);
-        List<FeedResponse> responses = feeds.stream()
+        List<Feed> filtered = feeds.stream()
                 .filter(f -> isOwner || Boolean.TRUE.equals(f.getIsPublic()))
-                .map(f -> toFeedResponse(f, currentUserId))
                 .toList();
+        List<FeedResponse> responses = toFeedResponses(filtered, currentUserId);
 
         return PageResponse.of(responses, pageRequest.getEffectiveSize(),
                 r -> String.valueOf(r.feedId()));
     }
 
-    // ── 피드 반응 (토글) ──
+    // ── 피드 반응 (토글) — 한 유저 한 피드당 하나의 반응만 가능 ──
 
     @Transactional
     public ReactionSummary toggleReaction(Long userId, Long feedId, ReactionType reactionType) {
         Feed feed = findFeed(feedId);
         User user = findUser(userId);
 
-        var existing = feedReactionRepository
-                .findByFeedFeedIdAndUserUserIdAndReactionType(feedId, userId, reactionType);
+        var existing = feedReactionRepository.findByFeedFeedIdAndUserUserId(feedId, userId);
 
         if (existing.isPresent()) {
-            feedReactionRepository.delete(existing.get());
+            FeedReaction current = existing.get();
+            if (current.getReactionType() == reactionType) {
+                // 같은 타입 → 삭제 (토글 off)
+                feedReactionRepository.delete(current);
+            } else {
+                // 다른 타입 → 교체
+                current.changeReactionType(reactionType);
+                eventPublisher.publishEvent(
+                        new FeedReactionEvent(feedId, userId, reactionType.getValue()));
+            }
         } else {
+            // 반응 없음 → 새로 생성
             FeedReaction reaction = FeedReaction.create(feed, user, reactionType);
             feedReactionRepository.save(reaction);
             eventPublisher.publishEvent(
@@ -145,6 +151,19 @@ public class FeedService {
                 .orElse(0L);
 
         return new ReactionSummary(reactionType.getValue(), count);
+    }
+
+    // ── 피드 반응 사용자 목록 ──
+
+    public List<ReactionUserResponse> getReactionUsers(Long feedId) {
+        findFeed(feedId); // 피드 존재 확인
+        return feedReactionRepository.findAllWithUserByFeedId(feedId).stream()
+                .map(fr -> new ReactionUserResponse(
+                        fr.getUser().getUserId(),
+                        fr.getUser().getNickname(),
+                        fr.getUser().getProfileImageUrl(),
+                        fr.getReactionType().getValue()))
+                .toList();
     }
 
     // ── 댓글 ──
@@ -246,6 +265,64 @@ public class FeedService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
     }
 
+    /**
+     * 배치 변환: N+1 쿼리를 3개 배치 쿼리로 최적화
+     * 기존: 1 + N×3 쿼리 → 최적화: 1 + 3 쿼리
+     */
+    private List<FeedResponse> toFeedResponses(List<Feed> feeds, Long currentUserId) {
+        if (feeds.isEmpty()) return Collections.emptyList();
+
+        List<Long> feedIds = feeds.stream().map(Feed::getFeedId).toList();
+
+        // 배치 1: 전체 피드의 반응 카운트 (feedId → List<ReactionSummary>)
+        Map<Long, List<ReactionSummary>> reactionsMap = new HashMap<>();
+        feedReactionRepository.countByFeedIdsGroupByReactionType(feedIds)
+                .forEach(row -> {
+                    Long feedId = (Long) row[0];
+                    String type = ((ReactionType) row[1]).getValue();
+                    Long count = (Long) row[2];
+                    reactionsMap.computeIfAbsent(feedId, k -> new ArrayList<>())
+                            .add(new ReactionSummary(type, count));
+                });
+
+        // 배치 2: 전체 피드의 댓글 카운트 (feedId → count)
+        Map<Long, Long> commentCountMap = new HashMap<>();
+        feedCommentRepository.countByFeedFeedIdIn(feedIds)
+                .forEach(row -> commentCountMap.put((Long) row[0], (Long) row[1]));
+
+        // 배치 3: 현재 유저의 반응 타입 (feedId → List<String>)
+        Map<Long, List<String>> myReactionsMap = new HashMap<>();
+        if (currentUserId != null) {
+            feedReactionRepository.findByFeedFeedIdInAndUserUserId(feedIds, currentUserId)
+                    .forEach(fr -> myReactionsMap.put(
+                            fr.getFeed().getFeedId(),
+                            List.of(fr.getReactionType().getValue())));
+        }
+
+        return feeds.stream().map(feed -> {
+            Long fid = feed.getFeedId();
+            VibeResult vr = feed.getVibeResult();
+            return new FeedResponse(
+                    fid,
+                    feed.getUser().getUserId(),
+                    feed.getUser().getNickname(),
+                    feed.getUser().getProfileImageUrl(),
+                    vr.getResultId(),
+                    vr.getGeneratedImageUrl(),
+                    vr.getPhrase(),
+                    feed.getCaption(),
+                    feed.getIsPublic(),
+                    feed.getViewCount(),
+                    reactionsMap.getOrDefault(fid, Collections.emptyList()),
+                    commentCountMap.getOrDefault(fid, 0L),
+                    myReactionsMap.getOrDefault(fid, Collections.emptyList()),
+                    feed.getCreatedAt(),
+                    feed.getUpdatedAt()
+            );
+        }).toList();
+    }
+
+    /** 단건 변환: getFeedDetail, createFeed, updateFeed 등 단건 조회용 */
     private FeedResponse toFeedResponse(Feed feed, Long currentUserId) {
         List<ReactionSummary> reactions = getReactionSummary(feed.getFeedId());
         long commentCount = feedCommentRepository.countByFeedFeedId(feed.getFeedId());
@@ -333,8 +410,8 @@ public class FeedService {
 
     private List<String> getMyReactionTypes(Long feedId, Long userId) {
         if (userId == null) return Collections.emptyList();
-        return feedReactionRepository.findByFeedFeedIdAndUserUserId(feedId, userId).stream()
-                .map(r -> r.getReactionType().getValue())
-                .toList();
+        return feedReactionRepository.findByFeedFeedIdAndUserUserId(feedId, userId)
+                .map(r -> List.of(r.getReactionType().getValue()))
+                .orElse(Collections.emptyList());
     }
 }
