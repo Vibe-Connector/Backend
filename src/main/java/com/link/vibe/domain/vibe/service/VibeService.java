@@ -19,6 +19,7 @@ import com.link.vibe.domain.vibe.repository.VibeSessionRepository;
 import com.link.vibe.global.i18n.LanguageContext;
 import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
+import com.link.vibe.global.service.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class VibeService {
     private final WeatherOptionRepository weatherOptionRepository;
     private final PlaceOptionRepository placeOptionRepository;
     private final CompanionOptionRepository companionOptionRepository;
+    private final S3StorageService s3StorageService;
     private final OpenAiService openAiService;
     private final ObjectMapper objectMapper;
 
@@ -156,6 +158,7 @@ public class VibeService {
                 result.getResultId(),
                 aiResult.phrase(),
                 aiResult.analysis(),
+                null,
                 new SelectedOptions(
                         moodValues,
                         timeOption.getTimeKey(),
@@ -198,6 +201,7 @@ public class VibeService {
                 result.getResultId(),
                 result.getPhrase(),
                 result.getAiAnalysis(),
+                result.getGeneratedImageUrl() != null ? s3StorageService.toPresignedUrl(result.getGeneratedImageUrl()) : null,
                 new SelectedOptions(
                         moodValues,
                         prompt.getTimeOption() != null ? prompt.getTimeOption().getTimeKey() : null,

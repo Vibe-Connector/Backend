@@ -10,9 +10,13 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 
@@ -27,6 +31,7 @@ public class S3StorageService {
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -52,6 +57,27 @@ public class S3StorageService {
             log.error("S3 upload failed", e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
         }
+
+        return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, key);
+    }
+
+    public String uploadBytes(String directory, byte[] imageBytes, String contentType, String extension) {
+        if (imageBytes == null || imageBytes.length == 0) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        if (imageBytes.length > MAX_FILE_SIZE) {
+            throw new BusinessException(ErrorCode.FILE_SIZE_EXCEEDED);
+        }
+
+        String key = directory + "/" + UUID.randomUUID() + extension;
+
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .contentType(contentType)
+                .build();
+
+        s3Client.putObject(request, RequestBody.fromBytes(imageBytes));
 
         return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, key);
     }
@@ -85,6 +111,31 @@ public class S3StorageService {
     private String getExtension(String filename) {
         if (filename == null || !filename.contains(".")) return "";
         return filename.substring(filename.lastIndexOf('.'));
+    }
+
+    /**
+     * S3 URL을 Presigned URL로 변환 (24시간 유효)
+     */
+    public String toPresignedUrl(String s3Url) {
+        String key = extractKey(s3Url);
+        if (key == null) return s3Url;
+
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofHours(24))
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+
+            return s3Presigner.presignGetObject(presignRequest).url().toString();
+        } catch (Exception e) {
+            log.warn("Presigned URL 생성 실패: {}", s3Url, e);
+            return s3Url;
+        }
     }
 
     private String extractKey(String fileUrl) {

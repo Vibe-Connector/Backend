@@ -192,6 +192,7 @@ public class VibePromptService {
                 sessionId,
                 aiResult.phrase(),
                 aiResult.analysis(),
+                null,
                 selectedOptions,
                 categoryRecs,
                 totalProcessingTimeMs,

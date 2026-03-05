@@ -9,6 +9,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +18,8 @@ import java.util.Map;
 public class OpenAiService {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAiService.class);
-    private static final String API_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String CHAT_API_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String IMAGE_API_URL = "https://api.openai.com/v1/images/generations";
 
     private static final String SYSTEM_PROMPT = """
             당신은 감성적인 분위기 큐레이터입니다.
@@ -32,6 +35,7 @@ public class OpenAiService {
             """;
 
     private final RestTemplate restTemplate;
+    private final RestTemplate dalleRestTemplate;
     private final ObjectMapper objectMapper;
 
     @Value("${openai.api-key}")
@@ -46,8 +50,20 @@ public class OpenAiService {
     @Value("${openai.temperature:0.8}")
     private double temperature;
 
-    public OpenAiService(RestTemplate openAiRestTemplate, ObjectMapper objectMapper) {
+    @Value("${openai.dalle.model:dall-e-3}")
+    private String dalleModel;
+
+    @Value("${openai.dalle.size:1024x1024}")
+    private String dalleSize;
+
+    @Value("${openai.dalle.quality:standard}")
+    private String dalleQuality;
+
+    public OpenAiService(RestTemplate openAiRestTemplate,
+                         @Qualifier("dalleRestTemplate") RestTemplate dalleRestTemplate,
+                         ObjectMapper objectMapper) {
         this.restTemplate = openAiRestTemplate;
+        this.dalleRestTemplate = dalleRestTemplate;
         this.objectMapper = objectMapper;
     }
 
@@ -73,7 +89,7 @@ public class OpenAiService {
             );
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(API_URL, entity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(CHAT_API_URL, entity, String.class);
 
             return parseResponse(response.getBody());
         } catch (Exception e) {
@@ -94,6 +110,58 @@ public class OpenAiService {
                 동반자: %s
                 """,
                 String.join(", ", moods), time, weather, place, companion);
+    }
+
+    public String buildImagePrompt(String phrase, List<String> moods, String time, String weather,
+                                    String place, String companion, Map<String, String> topItems) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Create a beautiful, atmospheric mood image that captures this vibe: \"").append(phrase).append("\". ");
+        sb.append("The scene should reflect: ");
+        sb.append("mood=").append(String.join(", ", moods));
+        sb.append(", time=").append(time);
+        sb.append(", weather=").append(weather);
+        sb.append(", place=").append(place);
+        sb.append(", companion=").append(companion).append(". ");
+
+        if (topItems != null && !topItems.isEmpty()) {
+            sb.append("Incorporate these elements subtly: ");
+            topItems.forEach((category, item) -> sb.append(category).append("=").append(item).append(", "));
+            sb.setLength(sb.length() - 2);
+            sb.append(". ");
+        }
+
+        sb.append("Style: cinematic, warm tones, high quality, no text or words in the image.");
+
+        String prompt = sb.toString();
+        if (prompt.length() > 4000) {
+            prompt = prompt.substring(0, 4000);
+        }
+        return prompt;
+    }
+
+    public String generateImage(String imagePrompt) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
+
+            Map<String, Object> requestBody = Map.of(
+                    "model", dalleModel,
+                    "prompt", imagePrompt,
+                    "n", 1,
+                    "size", dalleSize,
+                    "quality", dalleQuality
+            );
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<String> response = dalleRestTemplate.postForEntity(IMAGE_API_URL, entity, String.class);
+
+            JsonNode root = objectMapper.readTree(response.getBody());
+            return root.path("data").get(0).path("url").asText();
+        } catch (Exception e) {
+            log.error("DALL-E 이미지 생성 실패", e);
+            throw new RuntimeException("DALL-E 이미지 생성 실패", e);
+        }
     }
 
     private VibeResult parseResponse(String responseBody) {

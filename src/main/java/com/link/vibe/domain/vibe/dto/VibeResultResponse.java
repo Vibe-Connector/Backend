@@ -11,6 +11,7 @@ public record VibeResultResponse(
         @Schema(description = "결과 ID") Long resultId,
         @Schema(description = "AI 생성 분위기 문구") String phrase,
         @Schema(description = "AI 분석 결과") String analysis,
+        @Schema(description = "AI 생성 이미지 URL") String generatedImageUrl,
         @Schema(description = "선택한 옵션 정보") SelectedOptions selectedOptions,
         @Schema(description = "카테고리별 추천 아이템") List<CategoryRecommendation> recommendations,
         @Schema(description = "AI 처리 시간 (ms)") Integer processingTimeMs,
