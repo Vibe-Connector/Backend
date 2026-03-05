@@ -9,6 +9,8 @@ import com.link.vibe.domain.archive.repository.ArchiveFolderRepository;
 import com.link.vibe.domain.archive.repository.ArchiveItemRepository;
 import com.link.vibe.domain.archive.repository.ArchiveVibeRepository;
 import com.link.vibe.domain.archive.repository.FavoriteRepository;
+import com.link.vibe.domain.feed.entity.Feed;
+import com.link.vibe.domain.feed.repository.FeedRepository;
 import com.link.vibe.domain.item.entity.Item;
 import com.link.vibe.domain.item.repository.ItemRepository;
 import com.link.vibe.domain.item.repository.ItemTranslationRepository;
@@ -28,6 +30,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +43,7 @@ public class ArchiveService {
     private final ArchiveItemRepository archiveItemRepository;
     private final ArchiveFolderRepository archiveFolderRepository;
     private final FavoriteRepository favoriteRepository;
+    private final FeedRepository feedRepository;
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
     private final ItemTranslationRepository itemTranslationRepository;
@@ -75,7 +80,8 @@ public class ArchiveService {
                 .build();
 
         ArchiveVibe saved = archiveVibeRepository.save(archiveVibe);
-        return ArchiveVibeResponse.of(saved, false);
+        Long feedId = resolveFeedId(request.resultId());
+        return ArchiveVibeResponse.of(saved, false, feedId);
     }
 
     public PageResponse<ArchiveVibeResponse> getArchiveVibes(
@@ -97,8 +103,15 @@ public class ArchiveService {
                     : archiveVibeRepository.findByUser(userId, pageable);
         }
 
+        // resultId → feedId 일괄 매핑
+        List<Long> resultIds = archiveVibes.stream()
+                .map(av -> av.getVibeResult().getResultId())
+                .toList();
+        Map<Long, Long> resultIdToFeedId = resolveFeedIds(resultIds);
+
         List<ArchiveVibeResponse> content = archiveVibes.stream()
-                .map(av -> ArchiveVibeResponse.of(av, false))
+                .map(av -> ArchiveVibeResponse.of(av, false,
+                        resultIdToFeedId.get(av.getVibeResult().getResultId())))
                 .toList();
 
         return PageResponse.of(content, pageRequest.getEffectiveSize(),
@@ -287,6 +300,21 @@ public class ArchiveService {
     }
 
     // ──── 내부 헬퍼 ────
+
+    private Long resolveFeedId(Long resultId) {
+        List<Feed> feeds = feedRepository.findByVibeResultResultIdIn(List.of(resultId));
+        return feeds.isEmpty() ? null : feeds.get(0).getFeedId();
+    }
+
+    private Map<Long, Long> resolveFeedIds(List<Long> resultIds) {
+        if (resultIds.isEmpty()) return Map.of();
+        return feedRepository.findByVibeResultResultIdIn(resultIds).stream()
+                .collect(Collectors.toMap(
+                        f -> f.getVibeResult().getResultId(),
+                        Feed::getFeedId,
+                        (a, b) -> a  // 동일 resultId에 여러 피드가 있을 경우 첫 번째 사용
+                ));
+    }
 
     private String resolveItemName(Long itemId) {
         Long languageId = LanguageContext.getLanguageId();
