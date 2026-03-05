@@ -56,6 +56,10 @@ public class VibeResult {
         this.processingTimeMs = processingTimeMs;
     }
 
+    public void updateGeneratedImageUrl(String imageUrl) {
+        this.generatedImageUrl = imageUrl;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

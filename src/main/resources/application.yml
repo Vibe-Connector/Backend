@@ -10,7 +10,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    show-sql: true
+    show-sql: false
   sql:
     init:
       mode: never
@@ -62,6 +62,10 @@ openai:
   temperature: 0.8
   embedding-model: text-embedding-3-small
   embedding-dimensions: 1536
+  dalle:
+    model: dall-e-3
+    size: 1024x1024
+    quality: standard
 
 email:
   verification:
