@@ -126,7 +126,7 @@ class FeedServiceTest {
             });
             given(feedReactionRepository.countByFeedIdGroupByReactionType(100L)).willReturn(Collections.emptyList());
             given(feedCommentRepository.countByFeedFeedId(100L)).willReturn(0L);
-            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(100L, 1L)).willReturn(Collections.emptyList());
+            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(100L, 1L)).willReturn(Optional.empty());
 
             FeedCreateRequest request = new FeedCreateRequest(10L, "테스트 캡션", true);
 
@@ -196,7 +196,7 @@ class FeedServiceTest {
             given(feedRepository.findById(100L)).willReturn(Optional.of(feed));
             given(feedReactionRepository.countByFeedIdGroupByReactionType(100L)).willReturn(Collections.emptyList());
             given(feedCommentRepository.countByFeedFeedId(100L)).willReturn(0L);
-            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(100L, 1L)).willReturn(Collections.emptyList());
+            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(100L, 1L)).willReturn(Optional.empty());
 
             FeedUpdateRequest request = new FeedUpdateRequest("수정된 캡션", false);
 
@@ -284,7 +284,7 @@ class FeedServiceTest {
                     .willReturn(List.of(feed1, feed2));
             given(feedReactionRepository.countByFeedIdGroupByReactionType(anyLong())).willReturn(Collections.emptyList());
             given(feedCommentRepository.countByFeedFeedId(anyLong())).willReturn(0L);
-            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(anyLong(), eq(1L))).willReturn(Collections.emptyList());
+            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(anyLong(), eq(1L))).willReturn(Optional.empty());
 
             CursorPageRequest pageRequest = new CursorPageRequest();
             pageRequest.setSize(20);
