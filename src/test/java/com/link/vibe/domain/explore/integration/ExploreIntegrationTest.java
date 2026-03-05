@@ -49,6 +49,7 @@ class ExploreIntegrationTest {
 
     private User author;
     private User otherUser;
+    private User otherUser2;
 
     @BeforeEach
     void setUp() {
@@ -64,6 +65,13 @@ class ExploreIntegrationTest {
                 .password("password123")
                 .nickname("otheruser")
                 .name("Other User")
+                .build());
+
+        otherUser2 = userRepository.save(User.builder()
+                .email("explore-other2@example.com")
+                .password("password123")
+                .nickname("otheruser2")
+                .name("Other User 2")
                 .build());
     }
 
@@ -101,10 +109,13 @@ class ExploreIntegrationTest {
     }
 
     private void addReactions(Feed feed, User user, int count) {
+        // 한 유저 한 피드당 하나의 반응만 가능 (uk_feed_user 제약)
+        // count > 1이면 다른 유저로 분산 생성
+        User[] reactors = { user, otherUser2 };
         ReactionType[] types = ReactionType.values();
         for (int i = 0; i < count; i++) {
             feedReactionRepository.save(
-                    FeedReaction.create(feed, user, types[i % types.length]));
+                    FeedReaction.create(feed, reactors[i % reactors.length], types[i % types.length]));
         }
     }
 
