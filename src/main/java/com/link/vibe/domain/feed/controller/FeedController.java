@@ -13,8 +13,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.TimeUnit;
 
 @Tag(name = "Feeds", description = "피드 API — 피드 CRUD, 반응 토글, 댓글/대댓글, 좋아요")
 @RestController
@@ -145,11 +149,14 @@ public class FeedController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     @GetMapping("/api/v1/feeds")
-    public ApiResponse<PageResponse<FeedResponse>> getFeedTimeline(
+    public ResponseEntity<ApiResponse<PageResponse<FeedResponse>>> getFeedTimeline(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @ModelAttribute CursorPageRequest pageRequest) {
         Long currentUserId = (userDetails != null) ? userDetails.getUserId() : null;
-        return ApiResponse.ok(feedService.getFeedTimeline(currentUserId, pageRequest));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS)
+                        .staleWhileRevalidate(60, TimeUnit.SECONDS))
+                .body(ApiResponse.ok(feedService.getFeedTimeline(currentUserId, pageRequest)));
     }
 
     @Operation(

@@ -23,4 +23,15 @@ public interface FeedReactionRepository extends JpaRepository<FeedReaction, Long
            "WHERE fr.feed.feedId = :feedId " +
            "ORDER BY fr.createdAt DESC")
     List<FeedReaction> findAllWithUserByFeedId(@Param("feedId") Long feedId);
+
+    // ── 배치 쿼리 (N+1 최적화) ──
+
+    @Query("SELECT fr.feed.feedId, fr.reactionType, COUNT(fr) FROM FeedReaction fr " +
+           "WHERE fr.feed.feedId IN :feedIds GROUP BY fr.feed.feedId, fr.reactionType")
+    List<Object[]> countByFeedIdsGroupByReactionType(@Param("feedIds") List<Long> feedIds);
+
+    @Query("SELECT fr FROM FeedReaction fr " +
+           "WHERE fr.feed.feedId IN :feedIds AND fr.user.userId = :userId")
+    List<FeedReaction> findByFeedFeedIdInAndUserUserId(@Param("feedIds") List<Long> feedIds,
+                                                       @Param("userId") Long userId);
 }

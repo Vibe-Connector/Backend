@@ -20,8 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -93,9 +92,7 @@ public class FeedService {
         List<Feed> feeds = feedRepository.findPublicFeeds(
                 cursorId, PageRequest.of(0, pageRequest.getFetchSize()));
 
-        List<FeedResponse> responses = feeds.stream()
-                .map(f -> toFeedResponse(f, currentUserId))
-                .toList();
+        List<FeedResponse> responses = toFeedResponses(feeds, currentUserId);
 
         return PageResponse.of(responses, pageRequest.getEffectiveSize(),
                 r -> String.valueOf(r.feedId()));
@@ -108,10 +105,10 @@ public class FeedService {
                 userId, cursorId, PageRequest.of(0, pageRequest.getFetchSize()));
 
         boolean isOwner = userId.equals(currentUserId);
-        List<FeedResponse> responses = feeds.stream()
+        List<Feed> filtered = feeds.stream()
                 .filter(f -> isOwner || Boolean.TRUE.equals(f.getIsPublic()))
-                .map(f -> toFeedResponse(f, currentUserId))
                 .toList();
+        List<FeedResponse> responses = toFeedResponses(filtered, currentUserId);
 
         return PageResponse.of(responses, pageRequest.getEffectiveSize(),
                 r -> String.valueOf(r.feedId()));
@@ -268,6 +265,64 @@ public class FeedService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
     }
 
+    /**
+     * 배치 변환: N+1 쿼리를 3개 배치 쿼리로 최적화
+     * 기존: 1 + N×3 쿼리 → 최적화: 1 + 3 쿼리
+     */
+    private List<FeedResponse> toFeedResponses(List<Feed> feeds, Long currentUserId) {
+        if (feeds.isEmpty()) return Collections.emptyList();
+
+        List<Long> feedIds = feeds.stream().map(Feed::getFeedId).toList();
+
+        // 배치 1: 전체 피드의 반응 카운트 (feedId → List<ReactionSummary>)
+        Map<Long, List<ReactionSummary>> reactionsMap = new HashMap<>();
+        feedReactionRepository.countByFeedIdsGroupByReactionType(feedIds)
+                .forEach(row -> {
+                    Long feedId = (Long) row[0];
+                    String type = ((ReactionType) row[1]).getValue();
+                    Long count = (Long) row[2];
+                    reactionsMap.computeIfAbsent(feedId, k -> new ArrayList<>())
+                            .add(new ReactionSummary(type, count));
+                });
+
+        // 배치 2: 전체 피드의 댓글 카운트 (feedId → count)
+        Map<Long, Long> commentCountMap = new HashMap<>();
+        feedCommentRepository.countByFeedFeedIdIn(feedIds)
+                .forEach(row -> commentCountMap.put((Long) row[0], (Long) row[1]));
+
+        // 배치 3: 현재 유저의 반응 타입 (feedId → List<String>)
+        Map<Long, List<String>> myReactionsMap = new HashMap<>();
+        if (currentUserId != null) {
+            feedReactionRepository.findByFeedFeedIdInAndUserUserId(feedIds, currentUserId)
+                    .forEach(fr -> myReactionsMap.put(
+                            fr.getFeed().getFeedId(),
+                            List.of(fr.getReactionType().getValue())));
+        }
+
+        return feeds.stream().map(feed -> {
+            Long fid = feed.getFeedId();
+            VibeResult vr = feed.getVibeResult();
+            return new FeedResponse(
+                    fid,
+                    feed.getUser().getUserId(),
+                    feed.getUser().getNickname(),
+                    feed.getUser().getProfileImageUrl(),
+                    vr.getResultId(),
+                    vr.getGeneratedImageUrl(),
+                    vr.getPhrase(),
+                    feed.getCaption(),
+                    feed.getIsPublic(),
+                    feed.getViewCount(),
+                    reactionsMap.getOrDefault(fid, Collections.emptyList()),
+                    commentCountMap.getOrDefault(fid, 0L),
+                    myReactionsMap.getOrDefault(fid, Collections.emptyList()),
+                    feed.getCreatedAt(),
+                    feed.getUpdatedAt()
+            );
+        }).toList();
+    }
+
+    /** 단건 변환: getFeedDetail, createFeed, updateFeed 등 단건 조회용 */
     private FeedResponse toFeedResponse(Feed feed, Long currentUserId) {
         List<ReactionSummary> reactions = getReactionSummary(feed.getFeedId());
         long commentCount = feedCommentRepository.countByFeedFeedId(feed.getFeedId());
