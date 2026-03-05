@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "feed_reactions",
     uniqueConstraints = @UniqueConstraint(
-        name = "uk_feed_user_reaction",
-        columnNames = {"feed_id", "user_id", "reaction_type"}))
+        name = "uk_feed_user",
+        columnNames = {"feed_id", "user_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FeedReaction {
@@ -48,5 +48,9 @@ public class FeedReaction {
         reaction.user = user;
         reaction.reactionType = reactionType;
         return reaction;
+    }
+
+    public void changeReactionType(ReactionType reactionType) {
+        this.reactionType = reactionType;
     }
 }

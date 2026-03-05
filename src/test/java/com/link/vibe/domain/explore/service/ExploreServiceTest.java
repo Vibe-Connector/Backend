@@ -81,7 +81,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.WEEK, request);
+                exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L);
 
             // then
             assertThat(result.content()).hasSize(2);
@@ -111,7 +111,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.MONTH, request);
+                exploreService.getPopularVibes(ExplorePeriod.MONTH, request, 1L);
 
             // then
             verify(feedRepository).findPopularFeeds(
@@ -132,7 +132,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.DAY, request);
+                exploreService.getPopularVibes(ExplorePeriod.DAY, request, 1L);
 
             // then
             assertThat(result.content()).isEmpty();
@@ -158,7 +158,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.WEEK, request);
+                exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L);
 
             // then
             assertThat(result.content()).hasSize(2);
@@ -177,11 +177,11 @@ class ExploreServiceTest {
                 .willReturn(Collections.emptyList());
 
             // when & then - DAY
-            exploreService.getPopularVibes(ExplorePeriod.DAY, request);
+            exploreService.getPopularVibes(ExplorePeriod.DAY, request, 1L);
             // when & then - WEEK
-            exploreService.getPopularVibes(ExplorePeriod.WEEK, request);
+            exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L);
             // when & then - MONTH
-            exploreService.getPopularVibes(ExplorePeriod.MONTH, request);
+            exploreService.getPopularVibes(ExplorePeriod.MONTH, request, 1L);
 
             verify(feedRepository, org.mockito.Mockito.times(3)).findPopularFeeds(
                 any(LocalDateTime.class), any(), any(), any(Pageable.class));
@@ -195,7 +195,7 @@ class ExploreServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                exploreService.getPopularVibes(ExplorePeriod.WEEK, request))
+                exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L))
                 .isInstanceOf(Exception.class);
         }
 
@@ -213,7 +213,7 @@ class ExploreServiceTest {
 
             // when
             PageResponse<ExploreVibeResponse> result =
-                exploreService.getPopularVibes(ExplorePeriod.WEEK, request);
+                exploreService.getPopularVibes(ExplorePeriod.WEEK, request, 1L);
 
             // then
             assertThat(result.content()).hasSize(1);

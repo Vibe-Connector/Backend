@@ -814,17 +814,18 @@ CREATE TABLE feeds (
 
 -- ----------------------------------------------------------------------------
 -- 피드 반응 테이블
--- 피드에 대한 사용자 반응 (좋아요, 하트, 와우, 포근해요).
+-- 피드에 대한 사용자 반응 (좋아요, 싫어요, 와우, 사랑해요).
 -- v3.2: 변동 없음.
+-- v3.3: COZY → DISLIKE 변경, 한 유저 한 피드당 하나의 반응만 가능.
 -- ----------------------------------------------------------------------------
 CREATE TABLE feed_reactions (
     reaction_id BIGINT PRIMARY KEY AUTO_INCREMENT,        -- 반응 고유 식별자
     feed_id BIGINT NOT NULL,                               -- 피드 ID (FK)
     user_id BIGINT NOT NULL,                               -- 반응한 사용자 ID (FK)
-    reaction_type ENUM('LIKE', 'LOVE', 'WOW',
-                       'COZY') NOT NULL,                   -- 반응 유형
+    reaction_type ENUM('LIKE', 'DISLIKE', 'WOW',
+                       'LOVE') NOT NULL,                   -- 반응 유형
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,        -- 반응 시각
-    UNIQUE KEY uk_feed_user_reaction (feed_id, user_id, reaction_type),
+    UNIQUE KEY uk_feed_user (feed_id, user_id),
     FOREIGN KEY (feed_id) REFERENCES feeds(feed_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

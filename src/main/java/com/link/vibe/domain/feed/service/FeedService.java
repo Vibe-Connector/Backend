@@ -117,19 +117,28 @@ public class FeedService {
                 r -> String.valueOf(r.feedId()));
     }
 
-    // ── 피드 반응 (토글) ──
+    // ── 피드 반응 (토글) — 한 유저 한 피드당 하나의 반응만 가능 ──
 
     @Transactional
     public ReactionSummary toggleReaction(Long userId, Long feedId, ReactionType reactionType) {
         Feed feed = findFeed(feedId);
         User user = findUser(userId);
 
-        var existing = feedReactionRepository
-                .findByFeedFeedIdAndUserUserIdAndReactionType(feedId, userId, reactionType);
+        var existing = feedReactionRepository.findByFeedFeedIdAndUserUserId(feedId, userId);
 
         if (existing.isPresent()) {
-            feedReactionRepository.delete(existing.get());
+            FeedReaction current = existing.get();
+            if (current.getReactionType() == reactionType) {
+                // 같은 타입 → 삭제 (토글 off)
+                feedReactionRepository.delete(current);
+            } else {
+                // 다른 타입 → 교체
+                current.changeReactionType(reactionType);
+                eventPublisher.publishEvent(
+                        new FeedReactionEvent(feedId, userId, reactionType.getValue()));
+            }
         } else {
+            // 반응 없음 → 새로 생성
             FeedReaction reaction = FeedReaction.create(feed, user, reactionType);
             feedReactionRepository.save(reaction);
             eventPublisher.publishEvent(
@@ -145,6 +154,19 @@ public class FeedService {
                 .orElse(0L);
 
         return new ReactionSummary(reactionType.getValue(), count);
+    }
+
+    // ── 피드 반응 사용자 목록 ──
+
+    public List<ReactionUserResponse> getReactionUsers(Long feedId) {
+        findFeed(feedId); // 피드 존재 확인
+        return feedReactionRepository.findAllWithUserByFeedId(feedId).stream()
+                .map(fr -> new ReactionUserResponse(
+                        fr.getUser().getUserId(),
+                        fr.getUser().getNickname(),
+                        fr.getUser().getProfileImageUrl(),
+                        fr.getReactionType().getValue()))
+                .toList();
     }
 
     // ── 댓글 ──
@@ -333,8 +355,8 @@ public class FeedService {
 
     private List<String> getMyReactionTypes(Long feedId, Long userId) {
         if (userId == null) return Collections.emptyList();
-        return feedReactionRepository.findByFeedFeedIdAndUserUserId(feedId, userId).stream()
-                .map(r -> r.getReactionType().getValue())
-                .toList();
+        return feedReactionRepository.findByFeedFeedIdAndUserUserId(feedId, userId)
+                .map(r -> List.of(r.getReactionType().getValue()))
+                .orElse(Collections.emptyList());
     }
 }

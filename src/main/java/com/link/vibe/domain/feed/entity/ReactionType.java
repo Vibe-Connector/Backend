@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ReactionType {
     LIKE("LIKE"),
-    LOVE("LOVE"),
+    DISLIKE("DISLIKE"),
     WOW("WOW"),
-    COZY("COZY");
+    LOVE("LOVE");
 
     private final String value;
 }

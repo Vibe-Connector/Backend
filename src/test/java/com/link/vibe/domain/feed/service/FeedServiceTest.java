@@ -314,7 +314,7 @@ class FeedServiceTest {
 
             given(feedRepository.findById(100L)).willReturn(Optional.of(feed));
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
-            given(feedReactionRepository.findByFeedFeedIdAndUserUserIdAndReactionType(100L, 1L, ReactionType.LIKE))
+            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(100L, 1L))
                     .willReturn(Optional.empty());
             given(feedReactionRepository.save(any(FeedReaction.class))).willAnswer(inv -> inv.getArgument(0));
             given(feedReactionRepository.countByFeedIdGroupByReactionType(100L))
@@ -331,7 +331,7 @@ class FeedServiceTest {
         }
 
         @Test
-        @DisplayName("반응이 이미 있으면 삭제한다")
+        @DisplayName("같은 반응이 이미 있으면 삭제한다 (토글 off)")
         void toggleReaction_remove() {
             // given
             User user = createTestUser(1L, "testuser");
@@ -341,7 +341,7 @@ class FeedServiceTest {
 
             given(feedRepository.findById(100L)).willReturn(Optional.of(feed));
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
-            given(feedReactionRepository.findByFeedFeedIdAndUserUserIdAndReactionType(100L, 1L, ReactionType.LIKE))
+            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(100L, 1L))
                     .willReturn(Optional.of(existing));
             given(feedReactionRepository.countByFeedIdGroupByReactionType(100L))
                     .willReturn(Collections.emptyList());
@@ -354,6 +354,32 @@ class FeedServiceTest {
             assertThat(result.count()).isEqualTo(0L);
             verify(feedReactionRepository).delete(existing);
             verify(eventPublisher, never()).publishEvent((Object) any());
+        }
+
+        @Test
+        @DisplayName("다른 반응이 있으면 교체한다")
+        void toggleReaction_replace() {
+            // given
+            User user = createTestUser(1L, "testuser");
+            VibeResult vr = createTestVibeResult(10L);
+            Feed feed = createTestFeed(100L, user, vr);
+            FeedReaction existing = FeedReaction.create(feed, user, ReactionType.LIKE);
+
+            given(feedRepository.findById(100L)).willReturn(Optional.of(feed));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(100L, 1L))
+                    .willReturn(Optional.of(existing));
+            given(feedReactionRepository.countByFeedIdGroupByReactionType(100L))
+                    .willReturn(List.<Object[]>of(new Object[]{ReactionType.LOVE, 1L}));
+
+            // when
+            ReactionSummary result = feedService.toggleReaction(1L, 100L, ReactionType.LOVE);
+
+            // then
+            assertThat(result.reactionType()).isEqualTo("LOVE");
+            assertThat(existing.getReactionType()).isEqualTo(ReactionType.LOVE);
+            verify(feedReactionRepository, never()).delete(any());
+            verify(eventPublisher).publishEvent((Object) any());
         }
     }
 
