@@ -89,7 +89,7 @@ public class FeedService {
 
     public PageResponse<FeedResponse> getFeedTimeline(Long currentUserId, CursorPageRequest pageRequest) {
         Long cursorId = pageRequest.hasCursor() ? Long.parseLong(pageRequest.getCursor()) : null;
-        List<Feed> feeds = feedRepository.findPublicFeeds(
+        List<Feed> feeds = feedRepository.findPublicFeedsWithFetch(
                 cursorId, PageRequest.of(0, pageRequest.getFetchSize()));
 
         List<FeedResponse> responses = toFeedResponses(feeds, currentUserId);
@@ -101,7 +101,7 @@ public class FeedService {
     public PageResponse<FeedResponse> getUserFeeds(Long userId, Long currentUserId,
                                                     CursorPageRequest pageRequest) {
         Long cursorId = pageRequest.hasCursor() ? Long.parseLong(pageRequest.getCursor()) : null;
-        List<Feed> feeds = feedRepository.findByUserId(
+        List<Feed> feeds = feedRepository.findByUserIdWithFetch(
                 userId, cursorId, PageRequest.of(0, pageRequest.getFetchSize()));
 
         boolean isOwner = userId.equals(currentUserId);

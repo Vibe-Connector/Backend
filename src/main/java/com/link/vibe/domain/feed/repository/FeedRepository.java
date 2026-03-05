@@ -28,7 +28,7 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
 
     boolean existsByUserUserIdAndVibeResultResultId(Long userId, Long resultId);
 
-    // ── Strategy D: @EntityGraph (User, VibeResult 즉시 로딩) ──
+    // ── @EntityGraph (User, VibeResult 즉시 로딩) — B+D 전략 ──
 
     @EntityGraph(attributePaths = {"user", "vibeResult"})
     @Query("SELECT f FROM Feed f " +
@@ -36,6 +36,15 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
            "AND (:cursor IS NULL OR f.feedId < :cursor) " +
            "ORDER BY f.feedId DESC")
     List<Feed> findPublicFeedsWithFetch(@Param("cursor") Long cursor, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user", "vibeResult"})
+    @Query("SELECT f FROM Feed f " +
+           "WHERE f.user.userId = :userId " +
+           "AND (:cursor IS NULL OR f.feedId < :cursor) " +
+           "ORDER BY f.feedId DESC")
+    List<Feed> findByUserIdWithFetch(@Param("userId") Long userId,
+                                     @Param("cursor") Long cursor,
+                                     Pageable pageable);
 
     // ── Strategy C: Native JOIN (단일 쿼리로 모든 데이터 집계) ──
 

@@ -280,11 +280,11 @@ class FeedServiceTest {
             Feed feed1 = createTestFeed(102L, user, vr);
             Feed feed2 = createTestFeed(101L, user, vr);
 
-            given(feedRepository.findPublicFeeds(isNull(), any(Pageable.class)))
+            given(feedRepository.findPublicFeedsWithFetch(isNull(), any(Pageable.class)))
                     .willReturn(List.of(feed1, feed2));
-            given(feedReactionRepository.countByFeedIdGroupByReactionType(anyLong())).willReturn(Collections.emptyList());
-            given(feedCommentRepository.countByFeedFeedId(anyLong())).willReturn(0L);
-            given(feedReactionRepository.findByFeedFeedIdAndUserUserId(anyLong(), eq(1L))).willReturn(Optional.empty());
+            given(feedReactionRepository.countByFeedIdsGroupByReactionType(anyList())).willReturn(Collections.emptyList());
+            given(feedCommentRepository.countByFeedFeedIdIn(anyList())).willReturn(Collections.emptyList());
+            given(feedReactionRepository.findByFeedFeedIdInAndUserUserId(anyList(), eq(1L))).willReturn(Collections.emptyList());
 
             CursorPageRequest pageRequest = new CursorPageRequest();
             pageRequest.setSize(20);
