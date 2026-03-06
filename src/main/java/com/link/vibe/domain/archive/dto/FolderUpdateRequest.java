@@ -15,5 +15,8 @@ public record FolderUpdateRequest(
         String thumbnailUrl,
 
         @Schema(description = "정렬 순서 (변경할 경우에만 전송)", example = "1")
-        Integer sortOrder
+        Integer sortOrder,
+
+        @Schema(description = "공개 여부 (변경할 경우에만 전송)", example = "true")
+        Boolean isPublic
 ) {}

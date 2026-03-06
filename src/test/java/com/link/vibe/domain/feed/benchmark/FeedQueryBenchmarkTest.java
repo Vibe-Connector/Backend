@@ -313,7 +313,7 @@ class FeedQueryBenchmarkTest {
 
         BenchmarkResult result = recordResult("D: @EntityGraph", stats, startNano);
         assertThat(responses).hasSize(FEED_COUNT);
-        // A(~101)보다 적고 B(~44)와 비슷하거나 조금 더 (User/VR LAZY 제거, 반응/댓글 N+1 잔존)
+        assertThat(result.queryCount()).isLessThan(101); // A보다 적어야 함 (User/VR LAZY 제거, 반응/댓글 N+1 잔존)
     }
 
     // ═══════════════════════════════════════════

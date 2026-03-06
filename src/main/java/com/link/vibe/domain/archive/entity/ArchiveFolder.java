@@ -35,20 +35,28 @@ public class ArchiveFolder extends BaseTimeEntity {
     @Column(name = "sort_order")
     private Integer sortOrder;
 
+    @Column(name = "is_public")
+    private Boolean isPublic;
+
     @Builder
     public ArchiveFolder(User user, String folderName, String folderType,
-                         String thumbnailUrl, Integer sortOrder) {
+                         String thumbnailUrl, Integer sortOrder, Boolean isPublic) {
         this.user = user;
         this.folderName = folderName;
         this.folderType = folderType;
         this.thumbnailUrl = thumbnailUrl;
         this.sortOrder = sortOrder != null ? sortOrder : 0;
+        this.isPublic = isPublic != null ? isPublic : true;
     }
 
     public void update(String folderName, String thumbnailUrl, Integer sortOrder) {
         if (folderName != null) this.folderName = folderName;
         if (thumbnailUrl != null) this.thumbnailUrl = thumbnailUrl;
         if (sortOrder != null) this.sortOrder = sortOrder;
+    }
+
+    public void updatePublic(Boolean isPublic) {
+        if (isPublic != null) this.isPublic = isPublic;
     }
 
     public boolean isVibeFolder() {

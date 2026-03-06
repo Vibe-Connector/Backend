@@ -11,7 +11,8 @@ public record ArchiveItemRequest(
         @NotNull(message = "itemId는 필수입니다.")
         Long itemId,
 
-        @Schema(description = "폴더 ID (선택, ITEM 타입 폴더만 가능)", example = "1")
+        @Schema(description = "폴더 ID (필수, ITEM 타입 폴더만 가능)", example = "1")
+        @NotNull(message = "folderId는 필수입니다.")
         Long folderId,
 
         @Schema(description = "반응 ID (선택)", example = "1")

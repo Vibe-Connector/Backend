@@ -63,13 +63,13 @@ public class ArchiveService {
             throw new BusinessException(ErrorCode.ARCHIVE_DUPLICATE);
         }
 
-        ArchiveFolder folder = null;
-        if (request.folderId() != null) {
-            folder = archiveFolderRepository.findByFolderIdAndUserUserId(request.folderId(), userId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
-            if (!folder.isVibeFolder()) {
-                throw new BusinessException(ErrorCode.ARCHIVE_FOLDER_TYPE_MISMATCH);
-            }
+        ArchiveFolder folder = archiveFolderRepository.findByFolderIdAndUserUserId(request.folderId(), userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
+        if (!folder.isVibeFolder()) {
+            throw new BusinessException(ErrorCode.ARCHIVE_FOLDER_TYPE_MISMATCH);
+        }
+        if (archiveVibeRepository.countByFolderFolderId(request.folderId()) >= 20) {
+            throw new BusinessException(ErrorCode.ARCHIVE_ITEM_LIMIT_EXCEEDED);
         }
 
         ArchiveVibe archiveVibe = ArchiveVibe.builder()
@@ -110,8 +110,12 @@ public class ArchiveService {
         Map<Long, Long> resultIdToFeedId = resolveFeedIds(resultIds);
 
         List<ArchiveVibeResponse> content = archiveVibes.stream()
-                .map(av -> ArchiveVibeResponse.of(av, false,
-                        resultIdToFeedId.get(av.getVibeResult().getResultId())))
+                .map(av -> {
+                    boolean isFavorite = favoriteRepository
+                            .existsByUserUserIdAndArchiveVibeArchiveId(userId, av.getArchiveId());
+                    return ArchiveVibeResponse.of(av, isFavorite,
+                            resultIdToFeedId.get(av.getVibeResult().getResultId()));
+                })
                 .toList();
 
         return PageResponse.of(content, pageRequest.getEffectiveSize(),
@@ -140,13 +144,13 @@ public class ArchiveService {
             throw new BusinessException(ErrorCode.ARCHIVE_DUPLICATE);
         }
 
-        ArchiveFolder folder = null;
-        if (request.folderId() != null) {
-            folder = archiveFolderRepository.findByFolderIdAndUserUserId(request.folderId(), userId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
-            if (!folder.isItemFolder()) {
-                throw new BusinessException(ErrorCode.ARCHIVE_FOLDER_TYPE_MISMATCH);
-            }
+        ArchiveFolder folder = archiveFolderRepository.findByFolderIdAndUserUserId(request.folderId(), userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
+        if (!folder.isItemFolder()) {
+            throw new BusinessException(ErrorCode.ARCHIVE_FOLDER_TYPE_MISMATCH);
+        }
+        if (archiveItemRepository.countByFolderFolderId(request.folderId()) >= 20) {
+            throw new BusinessException(ErrorCode.ARCHIVE_ITEM_LIMIT_EXCEEDED);
         }
 
         ArchiveItem archiveItem = ArchiveItem.builder()
@@ -250,6 +254,10 @@ public class ArchiveService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        if (archiveFolderRepository.countByUserUserId(userId) >= 5) {
+            throw new BusinessException(ErrorCode.ARCHIVE_FOLDER_LIMIT_EXCEEDED);
+        }
+
         String folderType = request.folderType().toUpperCase();
         if (!"VIBE".equals(folderType) && !"ITEM".equals(folderType)) {
             throw new BusinessException(ErrorCode.ARCHIVE_INVALID_FOLDER_TYPE);
@@ -261,6 +269,7 @@ public class ArchiveService {
                 .folderType(folderType)
                 .thumbnailUrl(request.thumbnailUrl())
                 .sortOrder(request.sortOrder())
+                .isPublic(request.isPublic())
                 .build();
 
         ArchiveFolder saved = archiveFolderRepository.save(folder);
@@ -277,7 +286,7 @@ public class ArchiveService {
         }
 
         return folders.stream()
-                .map(folder -> FolderResponse.of(folder, 0))
+                .map(folder -> FolderResponse.of(folder, countArchivesInFolder(folder)))
                 .toList();
     }
 
@@ -287,8 +296,18 @@ public class ArchiveService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
 
         folder.update(request.folderName(), request.thumbnailUrl(), request.sortOrder());
+        folder.updatePublic(request.isPublic());
 
-        return FolderResponse.of(folder, 0);
+        return FolderResponse.of(folder, countArchivesInFolder(folder));
+    }
+
+    public List<FolderResponse> getPublicFolders(Long userId) {
+        List<ArchiveFolder> folders = archiveFolderRepository
+                .findByUserUserIdAndIsPublicTrueOrderBySortOrderAsc(userId);
+
+        return folders.stream()
+                .map(folder -> FolderResponse.of(folder, countArchivesInFolder(folder)))
+                .toList();
     }
 
     @Transactional
@@ -299,7 +318,73 @@ public class ArchiveService {
         archiveFolderRepository.delete(folder);
     }
 
+    // ──── 공개 폴더 컨텐츠 조회 ────
+
+    public PageResponse<ArchiveVibeResponse> getPublicFolderVibes(
+            Long ownerUserId, Long folderId, CursorPageRequest pageRequest) {
+
+        archiveFolderRepository.findByFolderIdAndUserUserId(folderId, ownerUserId)
+                .filter(f -> Boolean.TRUE.equals(f.getIsPublic()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
+
+        int fetchSize = pageRequest.getFetchSize();
+        PageRequest pageable = PageRequest.of(0, fetchSize);
+
+        List<ArchiveVibe> archiveVibes = pageRequest.hasCursor()
+                ? archiveVibeRepository.findByFolderWithCursor(
+                        folderId, Long.parseLong(pageRequest.getCursor()), pageable)
+                : archiveVibeRepository.findByFolder(folderId, pageable);
+
+        List<Long> resultIds = archiveVibes.stream()
+                .map(av -> av.getVibeResult().getResultId())
+                .toList();
+        Map<Long, Long> resultIdToFeedId = resolveFeedIds(resultIds);
+
+        List<ArchiveVibeResponse> content = archiveVibes.stream()
+                .map(av -> ArchiveVibeResponse.of(av, false,
+                        resultIdToFeedId.get(av.getVibeResult().getResultId())))
+                .toList();
+
+        return PageResponse.of(content, pageRequest.getEffectiveSize(),
+                item -> String.valueOf(item.archiveId()));
+    }
+
+    public PageResponse<ArchiveItemResponse> getPublicFolderItems(
+            Long ownerUserId, Long folderId, CursorPageRequest pageRequest) {
+
+        archiveFolderRepository.findByFolderIdAndUserUserId(folderId, ownerUserId)
+                .filter(f -> Boolean.TRUE.equals(f.getIsPublic()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
+
+        int fetchSize = pageRequest.getFetchSize();
+        PageRequest pageable = PageRequest.of(0, fetchSize);
+
+        List<ArchiveItem> archiveItems = pageRequest.hasCursor()
+                ? archiveItemRepository.findByFolderWithCursor(
+                        folderId, Long.parseLong(pageRequest.getCursor()), pageable)
+                : archiveItemRepository.findByFolder(folderId, pageable);
+
+        List<ArchiveItemResponse> content = archiveItems.stream()
+                .map(ai -> {
+                    String itemName = resolveItemName(ai.getItem().getItemId());
+                    String categoryKey = ai.getItem().getCategory().getCategoryKey();
+                    return ArchiveItemResponse.of(ai, itemName, categoryKey, false);
+                })
+                .toList();
+
+        return PageResponse.of(content, pageRequest.getEffectiveSize(),
+                item -> String.valueOf(item.archiveItemId()));
+    }
+
     // ──── 내부 헬퍼 ────
+
+    private long countArchivesInFolder(ArchiveFolder folder) {
+        if (folder.isVibeFolder()) {
+            return archiveVibeRepository.countByFolderFolderId(folder.getFolderId());
+        } else {
+            return archiveItemRepository.countByFolderFolderId(folder.getFolderId());
+        }
+    }
 
     private Long resolveFeedId(Long resultId) {
         List<Feed> feeds = feedRepository.findByVibeResultResultIdIn(List.of(resultId));

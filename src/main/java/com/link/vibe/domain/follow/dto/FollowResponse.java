@@ -9,5 +9,8 @@ public record FollowResponse(
         boolean following,
 
         @Schema(description = "해당 사용자의 팔로워 수", example = "42")
-        long followerCount
+        long followerCount,
+
+        @Schema(description = "해당 사용자의 팔로잉 수", example = "15")
+        long followingCount
 ) {}

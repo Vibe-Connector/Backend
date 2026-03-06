@@ -55,4 +55,23 @@ public interface ArchiveItemRepository extends JpaRepository<ArchiveItem, Long> 
                                            Pageable pageable);
 
     long countByFolderFolderId(Long folderId);
+
+    // ── 공개 폴더 컨텐츠 조회 (folderId만으로 조회) ──
+
+    @Query("SELECT ai FROM ArchiveItem ai " +
+            "JOIN FETCH ai.item i " +
+            "JOIN FETCH i.category " +
+            "WHERE ai.folder.folderId = :folderId " +
+            "AND ai.archiveItemId < :cursor " +
+            "ORDER BY ai.archiveItemId DESC")
+    List<ArchiveItem> findByFolderWithCursor(@Param("folderId") Long folderId,
+                                              @Param("cursor") Long cursor,
+                                              Pageable pageable);
+
+    @Query("SELECT ai FROM ArchiveItem ai " +
+            "JOIN FETCH ai.item i " +
+            "JOIN FETCH i.category " +
+            "WHERE ai.folder.folderId = :folderId " +
+            "ORDER BY ai.archiveItemId DESC")
+    List<ArchiveItem> findByFolder(@Param("folderId") Long folderId, Pageable pageable);
 }

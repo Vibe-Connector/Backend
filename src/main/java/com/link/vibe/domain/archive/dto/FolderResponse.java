@@ -26,6 +26,9 @@ public record FolderResponse(
         @Schema(description = "폴더 내 아카이브 수", example = "5")
         long archiveCount,
 
+        @Schema(description = "공개 여부", example = "true")
+        boolean isPublic,
+
         @Schema(description = "생성 시각", example = "2026-02-27T10:30:00")
         LocalDateTime createdAt
 ) {
@@ -37,6 +40,7 @@ public record FolderResponse(
                 folder.getThumbnailUrl(),
                 folder.getSortOrder(),
                 archiveCount,
+                Boolean.TRUE.equals(folder.getIsPublic()),
                 folder.getCreatedAt()
         );
     }

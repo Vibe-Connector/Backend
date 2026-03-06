@@ -135,6 +135,36 @@ public class ArchiveController {
 
     // ──── 폴더 CRUD (B-26 ~ B-29) ────
 
+    // ──── 공개 폴더 컨텐츠 조회 ────
+
+    @Operation(summary = "타인 공개 폴더 Vibe 목록 조회", description = "특정 유저의 공개 폴더에 저장된 Vibe 목록을 조회합니다. 폴더가 비공개이면 404를 반환합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "폴더를 찾을 수 없거나 비공개 (ARCHIVE_004)")
+    })
+    @GetMapping("/users/{userId}/folders/{folderId}/vibes")
+    public ApiResponse<PageResponse<ArchiveVibeResponse>> getPublicFolderVibes(
+            @Parameter(description = "폴더 소유자 유저 ID", example = "1") @PathVariable Long userId,
+            @Parameter(description = "폴더 ID", example = "1") @PathVariable Long folderId,
+            @ModelAttribute CursorPageRequest pageRequest) {
+        return ApiResponse.ok(archiveService.getPublicFolderVibes(userId, folderId, pageRequest));
+    }
+
+    @Operation(summary = "타인 공개 폴더 아이템 목록 조회", description = "특정 유저의 공개 폴더에 저장된 아이템 목록을 조회합니다. 폴더가 비공개이면 404를 반환합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "폴더를 찾을 수 없거나 비공개 (ARCHIVE_004)")
+    })
+    @GetMapping("/users/{userId}/folders/{folderId}/items")
+    public ApiResponse<PageResponse<ArchiveItemResponse>> getPublicFolderItems(
+            @Parameter(description = "폴더 소유자 유저 ID", example = "1") @PathVariable Long userId,
+            @Parameter(description = "폴더 ID", example = "1") @PathVariable Long folderId,
+            @ModelAttribute CursorPageRequest pageRequest) {
+        return ApiResponse.ok(archiveService.getPublicFolderItems(userId, folderId, pageRequest));
+    }
+
+    // ──── 폴더 CRUD (B-26 ~ B-29) ────
+
     @Operation(summary = "폴더 생성", description = "아카이브 폴더를 생성합니다. folderType으로 VIBE(Vibe 결과용) 또는 ITEM(개별 아이템용)을 지정합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "폴더 생성 성공"),
@@ -156,7 +186,14 @@ public class ArchiveController {
         return ApiResponse.ok(archiveService.getFolders(userDetails.getUserId(), folderType));
     }
 
-    @Operation(summary = "폴더 수정", description = "폴더명, 썸네일, 정렬 순서를 수정합니다. folderType은 변경할 수 없습니다.")
+    @Operation(summary = "특정 유저의 공개 폴더 조회", description = "특정 유저의 공개 설정된 아카이브 폴더 목록을 조회합니다. 타인 프로필에서 사용됩니다.")
+    @GetMapping("/users/{userId}/folders")
+    public ApiResponse<List<FolderResponse>> getPublicFolders(
+            @Parameter(description = "조회할 유저 ID", example = "1") @PathVariable Long userId) {
+        return ApiResponse.ok(archiveService.getPublicFolders(userId));
+    }
+
+    @Operation(summary = "폴더 수정", description = "폴더명, 썸네일, 정렬 순서, 공개 여부를 수정합니다. folderType은 변경할 수 없습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "폴더 수정 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "폴더를 찾을 수 없음 (ARCHIVE_004)")
