@@ -70,6 +70,9 @@ public class ArchiveService {
             if (!folder.isVibeFolder()) {
                 throw new BusinessException(ErrorCode.ARCHIVE_FOLDER_TYPE_MISMATCH);
             }
+            if (archiveVibeRepository.countByFolderFolderId(request.folderId()) >= 20) {
+                throw new BusinessException(ErrorCode.ARCHIVE_ITEM_LIMIT_EXCEEDED);
+            }
         }
 
         ArchiveVibe archiveVibe = ArchiveVibe.builder()
@@ -146,6 +149,9 @@ public class ArchiveService {
                     .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
             if (!folder.isItemFolder()) {
                 throw new BusinessException(ErrorCode.ARCHIVE_FOLDER_TYPE_MISMATCH);
+            }
+            if (archiveItemRepository.countByFolderFolderId(request.folderId()) >= 20) {
+                throw new BusinessException(ErrorCode.ARCHIVE_ITEM_LIMIT_EXCEEDED);
             }
         }
 
