@@ -3,6 +3,7 @@ package com.link.vibe.domain.vibe.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.link.vibe.domain.feed.repository.FeedRepository;
 import com.link.vibe.domain.option.entity.*;
 import com.link.vibe.domain.option.repository.*;
 import com.link.vibe.domain.item.repository.ItemTranslationRepository;
@@ -44,6 +45,7 @@ public class VibeService {
     private final PlaceOptionRepository placeOptionRepository;
     private final CompanionOptionRepository companionOptionRepository;
     private final S3StorageService s3StorageService;
+    private final FeedRepository feedRepository;
     private final OpenAiService openAiService;
     private final ObjectMapper objectMapper;
 
@@ -250,7 +252,8 @@ public class VibeService {
         VibeResult vibeResult = vibeResultRepository.findById(resultId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.VIBE_RESULT_NOT_FOUND));
 
-        if (!vibeResult.getVibeSession().getUserId().equals(userId)) {
+        if (!vibeResult.getVibeSession().getUserId().equals(userId)
+                && !feedRepository.existsByVibeResultResultIdAndIsPublicTrue(resultId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 

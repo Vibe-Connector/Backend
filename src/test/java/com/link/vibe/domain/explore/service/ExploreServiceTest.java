@@ -6,6 +6,8 @@ import com.link.vibe.domain.explore.dto.ExploreVibeResponse;
 import com.link.vibe.domain.feed.repository.FeedRepository;
 import com.link.vibe.global.common.CursorPageRequest;
 import com.link.vibe.global.common.PageResponse;
+import com.link.vibe.global.service.S3StorageService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,9 +24,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +40,15 @@ class ExploreServiceTest {
 
     @Mock
     private ArchiveVibeRepository archiveVibeRepository;
+
+    @Mock
+    private S3StorageService s3StorageService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(s3StorageService.toPresignedUrl(anyString()))
+                .thenAnswer(inv -> inv.getArgument(0));
+    }
 
     // ── 테스트 헬퍼 ──
 
