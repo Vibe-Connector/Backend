@@ -11,6 +11,7 @@ import com.link.vibe.domain.user.entity.User;
 import com.link.vibe.domain.user.repository.UserRepository;
 import com.link.vibe.global.security.JwtTokenProvider;
 import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -333,6 +334,69 @@ class NotificationIntegrationTest {
                     .header("Authorization", bearer(accessToken)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("NOTI_001"));
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    // deleteReadNotificationsBefore — 읽음 알림 자동 삭제 쿼리 검증
+    // ═══════════════════════════════════════════
+
+    @Nested
+    @DisplayName("deleteReadNotificationsBefore - 읽음 알림 30일 자동 삭제")
+    class DeleteReadNotificationsBefore {
+
+        @Test
+        @DisplayName("readAt이 기준일 이전인 읽음 알림만 삭제한다")
+        void deletesOnlyOldReadNotifications() {
+            // 읽음 + 31일 전 → 삭제 대상
+            Notification oldRead = createNotification(NotificationType.FOLLOW, "오래된 읽음", "본문1", true);
+            // 읽음 + 1일 전 → 유지
+            Notification recentRead = createNotification(NotificationType.FOLLOW, "최근 읽음", "본문2", true);
+            // 미읽음 → 유지
+            Notification unread = createNotification(NotificationType.FOLLOW, "미읽음", "본문3", false);
+
+            // readAt을 직접 설정 (31일 전 / 1일 전)
+            em.createQuery("UPDATE Notification n SET n.readAt = :readAt WHERE n.notificationId = :id")
+                    .setParameter("readAt", LocalDateTime.now().minusDays(31))
+                    .setParameter("id", oldRead.getNotificationId())
+                    .executeUpdate();
+            em.createQuery("UPDATE Notification n SET n.readAt = :readAt WHERE n.notificationId = :id")
+                    .setParameter("readAt", LocalDateTime.now().minusDays(1))
+                    .setParameter("id", recentRead.getNotificationId())
+                    .executeUpdate();
+            em.flush();
+            em.clear();
+
+            LocalDateTime threshold = LocalDateTime.now().minusDays(30);
+            int deleted = notificationRepository.deleteReadNotificationsBefore(threshold);
+
+            assertThat(deleted).isEqualTo(1);
+            assertThat(notificationRepository.findById(oldRead.getNotificationId())).isEmpty();
+            assertThat(notificationRepository.findById(recentRead.getNotificationId())).isPresent();
+            assertThat(notificationRepository.findById(unread.getNotificationId())).isPresent();
+        }
+
+        @Test
+        @DisplayName("미읽음 알림은 readAt이 null이므로 삭제되지 않는다")
+        void doesNotDeleteUnreadNotifications() {
+            createNotification(NotificationType.FOLLOW, "미읽음1", "본문1", false);
+            createNotification(NotificationType.FEED_COMMENT, "미읽음2", "본문2", false);
+            em.flush();
+            em.clear();
+
+            LocalDateTime threshold = LocalDateTime.now().minusDays(30);
+            int deleted = notificationRepository.deleteReadNotificationsBefore(threshold);
+
+            assertThat(deleted).isZero();
+        }
+
+        @Test
+        @DisplayName("삭제 대상이 없으면 0을 반환한다")
+        void noDeletionTargets() {
+            LocalDateTime threshold = LocalDateTime.now().minusDays(30);
+            int deleted = notificationRepository.deleteReadNotificationsBefore(threshold);
+
+            assertThat(deleted).isZero();
         }
     }
 }
