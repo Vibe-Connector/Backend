@@ -11,6 +11,8 @@ import com.link.vibe.global.common.CursorPageRequest;
 import com.link.vibe.global.common.PageResponse;
 import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
+import com.link.vibe.global.service.S3StorageService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -43,7 +45,14 @@ class FeedServiceTest {
     @Mock private CommentReactionRepository commentReactionRepository;
     @Mock private UserRepository userRepository;
     @Mock private VibeResultRepository vibeResultRepository;
+    @Mock private S3StorageService s3StorageService;
     @Mock private ApplicationEventPublisher eventPublisher;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(s3StorageService.toPresignedUrl(anyString()))
+                .thenAnswer(inv -> inv.getArgument(0));
+    }
 
     // ── 테스트 헬퍼 ──
 
