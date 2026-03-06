@@ -314,6 +314,64 @@ public class ArchiveService {
         archiveFolderRepository.delete(folder);
     }
 
+    // ──── 공개 폴더 컨텐츠 조회 ────
+
+    public PageResponse<ArchiveVibeResponse> getPublicFolderVibes(
+            Long ownerUserId, Long folderId, CursorPageRequest pageRequest) {
+
+        archiveFolderRepository.findByFolderIdAndUserUserId(folderId, ownerUserId)
+                .filter(f -> Boolean.TRUE.equals(f.getIsPublic()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
+
+        int fetchSize = pageRequest.getFetchSize();
+        PageRequest pageable = PageRequest.of(0, fetchSize);
+
+        List<ArchiveVibe> archiveVibes = pageRequest.hasCursor()
+                ? archiveVibeRepository.findByFolderWithCursor(
+                        folderId, Long.parseLong(pageRequest.getCursor()), pageable)
+                : archiveVibeRepository.findByFolder(folderId, pageable);
+
+        List<Long> resultIds = archiveVibes.stream()
+                .map(av -> av.getVibeResult().getResultId())
+                .toList();
+        Map<Long, Long> resultIdToFeedId = resolveFeedIds(resultIds);
+
+        List<ArchiveVibeResponse> content = archiveVibes.stream()
+                .map(av -> ArchiveVibeResponse.of(av, false,
+                        resultIdToFeedId.get(av.getVibeResult().getResultId())))
+                .toList();
+
+        return PageResponse.of(content, pageRequest.getEffectiveSize(),
+                item -> String.valueOf(item.archiveId()));
+    }
+
+    public PageResponse<ArchiveItemResponse> getPublicFolderItems(
+            Long ownerUserId, Long folderId, CursorPageRequest pageRequest) {
+
+        archiveFolderRepository.findByFolderIdAndUserUserId(folderId, ownerUserId)
+                .filter(f -> Boolean.TRUE.equals(f.getIsPublic()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
+
+        int fetchSize = pageRequest.getFetchSize();
+        PageRequest pageable = PageRequest.of(0, fetchSize);
+
+        List<ArchiveItem> archiveItems = pageRequest.hasCursor()
+                ? archiveItemRepository.findByFolderWithCursor(
+                        folderId, Long.parseLong(pageRequest.getCursor()), pageable)
+                : archiveItemRepository.findByFolder(folderId, pageable);
+
+        List<ArchiveItemResponse> content = archiveItems.stream()
+                .map(ai -> {
+                    String itemName = resolveItemName(ai.getItem().getItemId());
+                    String categoryKey = ai.getItem().getCategory().getCategoryKey();
+                    return ArchiveItemResponse.of(ai, itemName, categoryKey, false);
+                })
+                .toList();
+
+        return PageResponse.of(content, pageRequest.getEffectiveSize(),
+                item -> String.valueOf(item.archiveItemId()));
+    }
+
     // ──── 내부 헬퍼 ────
 
     private long countArchivesInFolder(ArchiveFolder folder) {

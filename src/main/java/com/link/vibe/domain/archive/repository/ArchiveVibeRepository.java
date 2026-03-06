@@ -55,4 +55,23 @@ public interface ArchiveVibeRepository extends JpaRepository<ArchiveVibe, Long> 
                                            Pageable pageable);
 
     long countByFolderFolderId(Long folderId);
+
+    // ── 공개 폴더 컨텐츠 조회 (folderId만으로 조회) ──
+
+    @Query("SELECT av FROM ArchiveVibe av " +
+            "JOIN FETCH av.vibeResult vr " +
+            "JOIN FETCH vr.vibeSession vs " +
+            "WHERE av.folder.folderId = :folderId " +
+            "AND av.archiveId < :cursor " +
+            "ORDER BY av.archiveId DESC")
+    List<ArchiveVibe> findByFolderWithCursor(@Param("folderId") Long folderId,
+                                              @Param("cursor") Long cursor,
+                                              Pageable pageable);
+
+    @Query("SELECT av FROM ArchiveVibe av " +
+            "JOIN FETCH av.vibeResult vr " +
+            "JOIN FETCH vr.vibeSession vs " +
+            "WHERE av.folder.folderId = :folderId " +
+            "ORDER BY av.archiveId DESC")
+    List<ArchiveVibe> findByFolder(@Param("folderId") Long folderId, Pageable pageable);
 }
