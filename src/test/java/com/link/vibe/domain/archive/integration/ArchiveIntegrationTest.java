@@ -170,7 +170,7 @@ class ArchiveIntegrationTest {
         @Test
         @DisplayName("VIBE 타입 폴더를 생성할 수 있다")
         void createVibeFolder() throws Exception {
-            var request = new FolderCreateRequest("주말 감성", "VIBE", null, 1);
+            var request = new FolderCreateRequest("주말 감성", "VIBE", null, 1, null);
 
             mockMvc.perform(post("/api/v1/archives/folders")
                             .header("Authorization", bearer(accessToken))
@@ -185,7 +185,7 @@ class ArchiveIntegrationTest {
         @Test
         @DisplayName("ITEM 타입 폴더를 생성할 수 있다")
         void createItemFolder() throws Exception {
-            var request = new FolderCreateRequest("나만의 커피", "ITEM", null, 0);
+            var request = new FolderCreateRequest("나만의 커피", "ITEM", null, 0, null);
 
             mockMvc.perform(post("/api/v1/archives/folders")
                             .header("Authorization", bearer(accessToken))
@@ -198,7 +198,7 @@ class ArchiveIntegrationTest {
         @Test
         @DisplayName("유효하지 않은 폴더 타입이면 400 에러")
         void invalidFolderType() throws Exception {
-            var request = new FolderCreateRequest("잘못된 타입", "INVALID", null, 0);
+            var request = new FolderCreateRequest("잘못된 타입", "INVALID", null, 0, null);
 
             mockMvc.perform(post("/api/v1/archives/folders")
                             .header("Authorization", bearer(accessToken))
@@ -211,7 +211,7 @@ class ArchiveIntegrationTest {
         @Test
         @DisplayName("미인증 사용자는 폴더를 생성할 수 없다 (401)")
         void unauthorized() throws Exception {
-            var request = new FolderCreateRequest("폴더", "VIBE", null, 0);
+            var request = new FolderCreateRequest("폴더", "VIBE", null, 0, null);
 
             mockMvc.perform(post("/api/v1/archives/folders")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -263,7 +263,7 @@ class ArchiveIntegrationTest {
             ArchiveFolder folder = createVibeFolder("원래 이름");
             flushAndClear();
 
-            var request = new FolderUpdateRequest("수정된 이름", null, null);
+            var request = new FolderUpdateRequest("수정된 이름", null, null, null);
 
             mockMvc.perform(put("/api/v1/archives/folders/{folderId}", folder.getFolderId())
                             .header("Authorization", bearer(accessToken))
@@ -276,7 +276,7 @@ class ArchiveIntegrationTest {
         @Test
         @DisplayName("존재하지 않는 폴더 수정 시 404")
         void notFound() throws Exception {
-            var request = new FolderUpdateRequest("이름", null, null);
+            var request = new FolderUpdateRequest("이름", null, null, null);
 
             mockMvc.perform(put("/api/v1/archives/folders/{folderId}", 99999L)
                             .header("Authorization", bearer(accessToken))

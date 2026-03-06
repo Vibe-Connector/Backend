@@ -22,5 +22,8 @@ public record FolderCreateRequest(
         String thumbnailUrl,
 
         @Schema(description = "정렬 순서 (선택, 기본값 0)", example = "0")
-        Integer sortOrder
+        Integer sortOrder,
+
+        @Schema(description = "공개 여부 (선택, 기본값 true)", example = "true")
+        Boolean isPublic
 ) {}

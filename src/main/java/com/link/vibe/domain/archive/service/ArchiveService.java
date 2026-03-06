@@ -265,6 +265,7 @@ public class ArchiveService {
                 .folderType(folderType)
                 .thumbnailUrl(request.thumbnailUrl())
                 .sortOrder(request.sortOrder())
+                .isPublic(request.isPublic())
                 .build();
 
         ArchiveFolder saved = archiveFolderRepository.save(folder);
@@ -291,8 +292,18 @@ public class ArchiveService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ARCHIVE_FOLDER_NOT_FOUND));
 
         folder.update(request.folderName(), request.thumbnailUrl(), request.sortOrder());
+        folder.updatePublic(request.isPublic());
 
         return FolderResponse.of(folder, countArchivesInFolder(folder));
+    }
+
+    public List<FolderResponse> getPublicFolders(Long userId) {
+        List<ArchiveFolder> folders = archiveFolderRepository
+                .findByUserUserIdAndIsPublicTrueOrderBySortOrderAsc(userId);
+
+        return folders.stream()
+                .map(folder -> FolderResponse.of(folder, countArchivesInFolder(folder)))
+                .toList();
     }
 
     @Transactional

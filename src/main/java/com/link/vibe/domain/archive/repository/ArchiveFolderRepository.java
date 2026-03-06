@@ -16,4 +16,7 @@ public interface ArchiveFolderRepository extends JpaRepository<ArchiveFolder, Lo
     Optional<ArchiveFolder> findByFolderIdAndUserUserId(Long folderId, Long userId);
 
     long countByUserUserId(Long userId);
+
+    // 타인의 공개 폴더 조회
+    List<ArchiveFolder> findByUserUserIdAndIsPublicTrueOrderBySortOrderAsc(Long userId);
 }

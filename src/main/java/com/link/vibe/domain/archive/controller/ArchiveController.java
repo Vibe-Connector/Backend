@@ -156,7 +156,14 @@ public class ArchiveController {
         return ApiResponse.ok(archiveService.getFolders(userDetails.getUserId(), folderType));
     }
 
-    @Operation(summary = "폴더 수정", description = "폴더명, 썸네일, 정렬 순서를 수정합니다. folderType은 변경할 수 없습니다.")
+    @Operation(summary = "특정 유저의 공개 폴더 조회", description = "특정 유저의 공개 설정된 아카이브 폴더 목록을 조회합니다. 타인 프로필에서 사용됩니다.")
+    @GetMapping("/users/{userId}/folders")
+    public ApiResponse<List<FolderResponse>> getPublicFolders(
+            @Parameter(description = "조회할 유저 ID", example = "1") @PathVariable Long userId) {
+        return ApiResponse.ok(archiveService.getPublicFolders(userId));
+    }
+
+    @Operation(summary = "폴더 수정", description = "폴더명, 썸네일, 정렬 순서, 공개 여부를 수정합니다. folderType은 변경할 수 없습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "폴더 수정 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "폴더를 찾을 수 없음 (ARCHIVE_004)")
