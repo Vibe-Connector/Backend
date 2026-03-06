@@ -189,7 +189,7 @@ class VibeServiceTest {
         given(vibeSessionRepository.findByIdWithDetails(999L)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> vibeService.getVibeDetail(999L))
+        assertThatThrownBy(() -> vibeService.getVibeDetail(1L, 999L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("찾을 수 없습니다");
     }

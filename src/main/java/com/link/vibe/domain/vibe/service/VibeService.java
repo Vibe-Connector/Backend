@@ -179,9 +179,13 @@ public class VibeService {
                 .toList();
     }
 
-    public VibeResultResponse getVibeDetail(Long sessionId) {
+    public VibeResultResponse getVibeDetail(Long userId, Long sessionId) {
         VibeSession session = vibeSessionRepository.findByIdWithDetails(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.VIBE_SESSION_NOT_FOUND));
+
+        if (!session.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
 
         if (session.getVibeResult() == null) {
             throw new BusinessException(ErrorCode.VIBE_RESULT_NOT_FOUND);
@@ -194,7 +198,7 @@ public class VibeService {
         VibePrompt prompt = session.getVibePrompt();
         VibeResult result = session.getVibeResult();
         List<String> moodValues = resolveMoodValues(prompt.getMoodKeywordIds());
-        List<CategoryRecommendation> recommendations = getVibeItems(result.getResultId());
+        List<CategoryRecommendation> recommendations = getVibeItemsInternal(result.getResultId());
 
         return new VibeResultResponse(
                 session.getSessionId(),
@@ -224,6 +228,7 @@ public class VibeService {
                 session.getSessionId(),
                 result.getResultId(),
                 result.getPhrase(),
+                result.getGeneratedImageUrl() != null ? s3StorageService.toPresignedUrl(result.getGeneratedImageUrl()) : null,
                 moodValues,
                 prompt != null && prompt.getTimeOption() != null ? prompt.getTimeOption().getTimeKey() : null,
                 prompt != null && prompt.getWeatherOption() != null ? prompt.getWeatherOption().getWeatherKey() : null,
@@ -241,11 +246,18 @@ public class VibeService {
         return new VibeItemLikeResponse(vibeItem.getVibeItemId(), vibeItem.getIsUserLiked());
     }
 
-    public List<CategoryRecommendation> getVibeItems(Long resultId) {
-        if (!vibeResultRepository.existsById(resultId)) {
-            throw new BusinessException(ErrorCode.VIBE_RESULT_NOT_FOUND);
+    public List<CategoryRecommendation> getVibeItems(Long userId, Long resultId) {
+        VibeResult vibeResult = vibeResultRepository.findById(resultId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.VIBE_RESULT_NOT_FOUND));
+
+        if (!vibeResult.getVibeSession().getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
+        return getVibeItemsInternal(resultId);
+    }
+
+    private List<CategoryRecommendation> getVibeItemsInternal(Long resultId) {
         List<VibeItem> vibeItems = vibeItemRepository.findByResultIdWithItemDetails(resultId);
         Long languageId = LanguageContext.getLanguageId();
 

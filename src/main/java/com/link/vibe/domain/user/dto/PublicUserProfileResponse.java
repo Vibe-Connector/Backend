@@ -22,4 +22,8 @@ public record PublicUserProfileResponse(
                 user.getProfileImageUrl()
         );
     }
+
+    public PublicUserProfileResponse withProfileImageUrl(String url) {
+        return new PublicUserProfileResponse(userId, nickname, url);
+    }
 }
