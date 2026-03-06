@@ -129,7 +129,8 @@ public class VibeController {
     public ApiResponse<List<CategoryRecommendation>> getVibeItems(
             @Parameter(description = "결과 ID", example = "1")
             @PathVariable Long resultId) {
-        return ApiResponse.ok(vibeService.getVibeItems(resultId));
+        Long userId = SecurityUtil.getCurrentUserId();
+        return ApiResponse.ok(vibeService.getVibeItems(userId, resultId));
     }
 
     @Operation(
@@ -173,6 +174,7 @@ public class VibeController {
     public ApiResponse<VibeResultResponse> getVibeDetail(
             @Parameter(description = "세션 ID", example = "1")
             @PathVariable Long sessionId) {
-        return ApiResponse.ok(vibeService.getVibeDetail(sessionId));
+        Long userId = SecurityUtil.getCurrentUserId();
+        return ApiResponse.ok(vibeService.getVibeDetail(userId, sessionId));
     }
 }

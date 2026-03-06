@@ -45,14 +45,16 @@ public class UserService {
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return UserProfileResponse.from(user);
+        return UserProfileResponse.from(user)
+                .withProfileImageUrl(resolveImageUrl(user.getProfileImageUrl()));
     }
 
     @Transactional(readOnly = true)
     public PublicUserProfileResponse getUserProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return PublicUserProfileResponse.from(user);
+        return PublicUserProfileResponse.from(user)
+                .withProfileImageUrl(resolveImageUrl(user.getProfileImageUrl()));
     }
 
     @Transactional
@@ -78,7 +80,8 @@ public class UserService {
                 request.timezone()
         );
 
-        return UserProfileResponse.from(user);
+        return UserProfileResponse.from(user)
+                .withProfileImageUrl(resolveImageUrl(user.getProfileImageUrl()));
     }
 
     @Transactional
@@ -94,7 +97,7 @@ public class UserService {
         String imageUrl = s3StorageService.upload("profiles", file);
         user.updateProfileImageUrl(imageUrl);
 
-        return new ProfileImageResponse(imageUrl);
+        return new ProfileImageResponse(s3StorageService.toPresignedUrl(imageUrl));
     }
 
     @Transactional
@@ -109,7 +112,8 @@ public class UserService {
         }
 
         user.updateProfile(request.nickname(), null, null, null, null, null, null, null);
-        return UserProfileResponse.from(user);
+        return UserProfileResponse.from(user)
+                .withProfileImageUrl(resolveImageUrl(user.getProfileImageUrl()));
     }
 
     @Transactional
@@ -212,6 +216,11 @@ public class UserService {
         );
 
         return UserSettingsResponse.from(settings);
+    }
+
+    private String resolveImageUrl(String rawUrl) {
+        if (rawUrl == null) return null;
+        return s3StorageService.toPresignedUrl(rawUrl);
     }
 
     private UserSettings createDefaultSettings(Long userId) {

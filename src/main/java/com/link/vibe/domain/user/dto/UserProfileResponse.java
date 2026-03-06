@@ -60,4 +60,11 @@ public record UserProfileResponse(
                 user.getCreatedAt()
         );
     }
+
+    public UserProfileResponse withProfileImageUrl(String url) {
+        return new UserProfileResponse(
+                userId, email, name, nickname, gender, birthYear,
+                url, preferredLanguageId, country, timezone, lastLoginAt, createdAt
+        );
+    }
 }

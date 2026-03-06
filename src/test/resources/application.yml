@@ -52,3 +52,7 @@ openai:
   model: gpt-4o-mini
   max-tokens: 500
   temperature: 0.8
+
+aiserver:
+  base-url: http://localhost:8000
+  api-prefix: /api/v1
