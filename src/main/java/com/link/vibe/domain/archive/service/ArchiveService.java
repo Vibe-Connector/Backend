@@ -110,8 +110,12 @@ public class ArchiveService {
         Map<Long, Long> resultIdToFeedId = resolveFeedIds(resultIds);
 
         List<ArchiveVibeResponse> content = archiveVibes.stream()
-                .map(av -> ArchiveVibeResponse.of(av, false,
-                        resultIdToFeedId.get(av.getVibeResult().getResultId())))
+                .map(av -> {
+                    boolean isFavorite = favoriteRepository
+                            .existsByUserUserIdAndArchiveVibeArchiveId(userId, av.getArchiveId());
+                    return ArchiveVibeResponse.of(av, isFavorite,
+                            resultIdToFeedId.get(av.getVibeResult().getResultId()));
+                })
                 .toList();
 
         return PageResponse.of(content, pageRequest.getEffectiveSize(),
