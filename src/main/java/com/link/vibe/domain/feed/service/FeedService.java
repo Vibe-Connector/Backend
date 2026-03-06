@@ -13,6 +13,7 @@ import com.link.vibe.global.event.CommentEvent;
 import com.link.vibe.global.event.FeedReactionEvent;
 import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
+import com.link.vibe.global.service.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,6 +35,7 @@ public class FeedService {
     private final CommentReactionRepository commentReactionRepository;
     private final UserRepository userRepository;
     private final VibeResultRepository vibeResultRepository;
+    private final S3StorageService s3StorageService;
     private final ApplicationEventPublisher eventPublisher;
 
     // ── 피드 CRUD ──
@@ -315,7 +317,7 @@ public class FeedService {
                     feed.getUser().getNickname(),
                     feed.getUser().getProfileImageUrl(),
                     vr.getResultId(),
-                    vr.getGeneratedImageUrl(),
+                    presignUrl(vr.getGeneratedImageUrl()),
                     vr.getPhrase(),
                     feed.getCaption(),
                     feed.getIsPublic(),
@@ -343,7 +345,7 @@ public class FeedService {
                 feed.getUser().getNickname(),
                 feed.getUser().getProfileImageUrl(),
                 vr.getResultId(),
-                vr.getGeneratedImageUrl(),
+                presignUrl(vr.getGeneratedImageUrl()),
                 vr.getPhrase(),
                 feed.getCaption(),
                 feed.getIsPublic(),
@@ -413,6 +415,10 @@ public class FeedService {
                         ((ReactionType) row[0]).getValue(),
                         (Long) row[1]))
                 .toList();
+    }
+
+    private String presignUrl(String s3Url) {
+        return s3Url != null ? s3StorageService.toPresignedUrl(s3Url) : null;
     }
 
     private List<String> getMyReactionTypes(Long feedId, Long userId) {

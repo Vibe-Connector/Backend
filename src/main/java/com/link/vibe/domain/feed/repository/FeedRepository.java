@@ -28,6 +28,8 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
 
     boolean existsByUserUserIdAndVibeResultResultId(Long userId, Long resultId);
 
+    boolean existsByVibeResultResultIdAndIsPublicTrue(Long resultId);
+
     List<Feed> findByVibeResultResultIdIn(java.util.Collection<Long> resultIds);
 
     // ── @EntityGraph (User, VibeResult 즉시 로딩) — B+D 전략 ──
