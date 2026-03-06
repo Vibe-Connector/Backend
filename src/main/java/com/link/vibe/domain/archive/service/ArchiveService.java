@@ -277,7 +277,7 @@ public class ArchiveService {
         }
 
         return folders.stream()
-                .map(folder -> FolderResponse.of(folder, 0))
+                .map(folder -> FolderResponse.of(folder, countArchivesInFolder(folder)))
                 .toList();
     }
 
@@ -288,7 +288,7 @@ public class ArchiveService {
 
         folder.update(request.folderName(), request.thumbnailUrl(), request.sortOrder());
 
-        return FolderResponse.of(folder, 0);
+        return FolderResponse.of(folder, countArchivesInFolder(folder));
     }
 
     @Transactional
@@ -300,6 +300,14 @@ public class ArchiveService {
     }
 
     // ──── 내부 헬퍼 ────
+
+    private long countArchivesInFolder(ArchiveFolder folder) {
+        if (folder.isVibeFolder()) {
+            return archiveVibeRepository.countByFolderFolderId(folder.getFolderId());
+        } else {
+            return archiveItemRepository.countByFolderFolderId(folder.getFolderId());
+        }
+    }
 
     private Long resolveFeedId(Long resultId) {
         List<Feed> feeds = feedRepository.findByVibeResultResultIdIn(List.of(resultId));
