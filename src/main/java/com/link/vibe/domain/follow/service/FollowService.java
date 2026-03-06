@@ -54,7 +54,8 @@ public class FollowService {
         eventPublisher.publishEvent(new FollowEvent(followerId, followingId));
 
         long followerCount = followRepository.countByFollowingUserId(followingId);
-        return new FollowResponse(true, followerCount);
+        long followingCount = followRepository.countByFollowerUserId(followingId);
+        return new FollowResponse(true, followerCount, followingCount);
     }
 
     @Transactional
@@ -68,13 +69,15 @@ public class FollowService {
         followRepository.delete(follow);
 
         long followerCount = followRepository.countByFollowingUserId(followingId);
-        return new FollowResponse(false, followerCount);
+        long followingCount = followRepository.countByFollowerUserId(followingId);
+        return new FollowResponse(false, followerCount, followingCount);
     }
 
     public FollowResponse getFollowStatus(Long currentUserId, Long targetUserId) {
         boolean isFollowing = followRepository.existsByFollowerUserIdAndFollowingUserId(currentUserId, targetUserId);
         long followerCount = followRepository.countByFollowingUserId(targetUserId);
-        return new FollowResponse(isFollowing, followerCount);
+        long followingCount = followRepository.countByFollowerUserId(targetUserId);
+        return new FollowResponse(isFollowing, followerCount, followingCount);
     }
 
     public PageResponse<FollowUserResponse> getFollowers(Long targetUserId, Long currentUserId, CursorPageRequest pageRequest) {
