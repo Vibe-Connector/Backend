@@ -11,7 +11,8 @@ public record ArchiveVibeRequest(
         @NotNull(message = "resultId는 필수입니다.")
         Long resultId,
 
-        @Schema(description = "폴더 ID (선택, VIBE 타입 폴더만 가능)", example = "1")
+        @Schema(description = "폴더 ID (필수, VIBE 타입 폴더만 가능)", example = "1")
+        @NotNull(message = "folderId는 필수입니다.")
         Long folderId,
 
         @Schema(description = "메모 (선택, 최대 500자)", example = "감성적인 분위기가 좋았다")

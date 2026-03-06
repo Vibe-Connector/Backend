@@ -319,7 +319,9 @@ class ArchiveIntegrationTest {
         @Test
         @DisplayName("Vibe 결과를 아카이브에 저장할 수 있다")
         void success() throws Exception {
-            var request = new ArchiveVibeRequest(vibeResult1.getResultId(), null, "좋은 감성");
+            ArchiveFolder folder = createVibeFolder("기본 폴더");
+            flushAndClear();
+            var request = new ArchiveVibeRequest(vibeResult1.getResultId(), folder.getFolderId(), "좋은 감성");
 
             mockMvc.perform(post("/api/v1/archives/vibes")
                             .header("Authorization", bearer(accessToken))
@@ -369,11 +371,12 @@ class ArchiveIntegrationTest {
         @Test
         @DisplayName("동일 결과 중복 저장 시 409 에러")
         void duplicate() throws Exception {
+            ArchiveFolder folder = createVibeFolder("중복 테스트 폴더");
             archiveVibeRepository.save(com.link.vibe.domain.archive.entity.ArchiveVibe.builder()
-                    .user(testUser).vibeResult(vibeResult1).memo(null).build());
+                    .user(testUser).vibeResult(vibeResult1).folder(folder).memo(null).build());
             flushAndClear();
 
-            var request = new ArchiveVibeRequest(vibeResult1.getResultId(), null, null);
+            var request = new ArchiveVibeRequest(vibeResult1.getResultId(), folder.getFolderId(), null);
 
             mockMvc.perform(post("/api/v1/archives/vibes")
                             .header("Authorization", bearer(accessToken))
@@ -554,7 +557,9 @@ class ArchiveIntegrationTest {
         @Test
         @DisplayName("아이템을 아카이브에 저장할 수 있다")
         void success() throws Exception {
-            var request = new ArchiveItemRequest(item1.getItemId(), null, null, "맛있었다");
+            ArchiveFolder folder = createItemFolder("기본 아이템 폴더");
+            flushAndClear();
+            var request = new ArchiveItemRequest(item1.getItemId(), folder.getFolderId(), null, "맛있었다");
 
             mockMvc.perform(post("/api/v1/archives/items")
                             .header("Authorization", bearer(accessToken))
@@ -604,11 +609,12 @@ class ArchiveIntegrationTest {
         @Test
         @DisplayName("동일 아이템 중복 저장 시 409 에러")
         void duplicate() throws Exception {
+            ArchiveFolder folder = createItemFolder("중복 테스트 폴더");
             archiveItemRepository.save(ArchiveItem.builder()
-                    .user(testUser).item(item1).build());
+                    .user(testUser).item(item1).folder(folder).build());
             flushAndClear();
 
-            var request = new ArchiveItemRequest(item1.getItemId(), null, null, null);
+            var request = new ArchiveItemRequest(item1.getItemId(), folder.getFolderId(), null, null);
 
             mockMvc.perform(post("/api/v1/archives/items")
                             .header("Authorization", bearer(accessToken))
