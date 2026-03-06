@@ -38,4 +38,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("UPDATE Notification n SET n.isRead = true, n.readAt = :now " +
             "WHERE n.user.userId = :userId AND n.isRead = false")
     int markAllAsRead(@Param("userId") Long userId, @Param("now") LocalDateTime now);
+
+    // 읽음 알림 30일 자동 삭제
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.isRead = true AND n.readAt < :threshold")
+    int deleteReadNotificationsBefore(@Param("threshold") LocalDateTime threshold);
 }
