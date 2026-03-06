@@ -62,6 +62,7 @@ public enum ErrorCode {
     ARCHIVE_FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ARCHIVE_004", "폴더를 찾을 수 없습니다."),
     ARCHIVE_FOLDER_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "ARCHIVE_005", "폴더 타입이 일치하지 않습니다."),
     ARCHIVE_INVALID_FOLDER_TYPE(HttpStatus.BAD_REQUEST, "ARCHIVE_006", "유효하지 않은 폴더 타입입니다."),
+    ARCHIVE_FOLDER_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "ARCHIVE_007", "폴더는 최대 5개까지 생성할 수 있습니다."),
 
     // 알림 (NOTI)
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTI_001", "알림을 찾을 수 없습니다."),

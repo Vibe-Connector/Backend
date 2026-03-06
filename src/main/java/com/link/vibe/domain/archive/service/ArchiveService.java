@@ -250,6 +250,10 @@ public class ArchiveService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        if (archiveFolderRepository.countByUserUserId(userId) >= 5) {
+            throw new BusinessException(ErrorCode.ARCHIVE_FOLDER_LIMIT_EXCEEDED);
+        }
+
         String folderType = request.folderType().toUpperCase();
         if (!"VIBE".equals(folderType) && !"ITEM".equals(folderType)) {
             throw new BusinessException(ErrorCode.ARCHIVE_INVALID_FOLDER_TYPE);
