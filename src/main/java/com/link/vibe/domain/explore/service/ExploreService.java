@@ -7,6 +7,7 @@ import com.link.vibe.domain.explore.dto.ExploreVibeResponse;
 import com.link.vibe.domain.feed.repository.FeedRepository;
 import com.link.vibe.global.common.CursorPageRequest;
 import com.link.vibe.global.common.PageResponse;
+import com.link.vibe.global.service.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class ExploreService {
 
     private final FeedRepository feedRepository;
     private final ArchiveVibeRepository archiveVibeRepository;
+    private final S3StorageService s3StorageService;
 
     public PageResponse<ExploreVibeResponse> getPopularVibes(ExplorePeriod period,
                                                               CursorPageRequest request,
@@ -91,7 +93,7 @@ public class ExploreService {
         return new ExploreVibeResponse(
             feedId,
             resultId,
-            generatedImageUrl,
+            generatedImageUrl != null ? s3StorageService.toPresignedUrl(generatedImageUrl) : null,
             caption,
             authorId,
             authorNickname,
