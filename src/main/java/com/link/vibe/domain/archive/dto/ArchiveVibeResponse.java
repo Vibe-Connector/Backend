@@ -37,10 +37,13 @@ public record ArchiveVibeResponse(
         @Schema(description = "즐겨찾기 여부", example = "false")
         boolean isFavorite,
 
+        @Schema(description = "연결된 피드 ID (피드 미생성 시 null)", example = "42")
+        Long feedId,
+
         @Schema(description = "아카이브 저장 시각", example = "2026-02-27T10:30:00")
         LocalDateTime createdAt
 ) {
-    public static ArchiveVibeResponse of(ArchiveVibe archiveVibe, boolean isFavorite) {
+    public static ArchiveVibeResponse of(ArchiveVibe archiveVibe, boolean isFavorite, Long feedId) {
         VibeResult result = archiveVibe.getVibeResult();
         ArchiveFolder folder = archiveVibe.getFolder();
         return new ArchiveVibeResponse(
@@ -53,6 +56,7 @@ public record ArchiveVibeResponse(
                 folder != null ? folder.getFolderName() : null,
                 archiveVibe.getMemo(),
                 isFavorite,
+                feedId,
                 archiveVibe.getCreatedAt()
         );
     }

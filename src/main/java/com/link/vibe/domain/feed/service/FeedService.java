@@ -79,8 +79,15 @@ public class FeedService {
     public FeedResponse getFeedDetail(Long feedId, Long currentUserId) {
         Feed feed = findFeed(feedId);
 
-        // 타인 게시물 조회 시에만 조회수 증가 (비인증 또는 본인이 아닌 경우)
-        if (currentUserId == null || !currentUserId.equals(feed.getUser().getUserId())) {
+        boolean isOwner = currentUserId != null && currentUserId.equals(feed.getUser().getUserId());
+
+        // 비공개 피드 접근 제어: 본인만 조회 가능
+        if (!Boolean.TRUE.equals(feed.getIsPublic()) && !isOwner) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // 타인 게시물 조회 시에만 조회수 증가
+        if (!isOwner) {
             feed.incrementViewCount();
         }
 
