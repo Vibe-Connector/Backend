@@ -139,7 +139,7 @@ public class FeedService {
                 (String) row[1],                     // caption
                 ((Number) row[3]).longValue(),       // author_id
                 (String) row[4],                     // author_nickname
-                (String) row[5],                     // author_profile_image_url
+                presignUrl((String) row[5]),          // author_profile_image_url
                 ((Number) row[9]).intValue(),         // similarity_score
                 ((Timestamp) row[2]).toLocalDateTime() // created_at
         )).toList();
@@ -192,7 +192,7 @@ public class FeedService {
                 .map(fr -> new ReactionUserResponse(
                         fr.getUser().getUserId(),
                         fr.getUser().getNickname(),
-                        fr.getUser().getProfileImageUrl(),
+                        presignUrl(fr.getUser().getProfileImageUrl()),
                         fr.getReactionType().getValue()))
                 .toList();
     }
@@ -337,7 +337,7 @@ public class FeedService {
                     fid,
                     feed.getUser().getUserId(),
                     feed.getUser().getNickname(),
-                    feed.getUser().getProfileImageUrl(),
+                    presignUrl(feed.getUser().getProfileImageUrl()),
                     vr.getResultId(),
                     presignUrl(vr.getGeneratedImageUrl()),
                     vr.getPhrase(),
@@ -365,7 +365,7 @@ public class FeedService {
                 feed.getFeedId(),
                 feed.getUser().getUserId(),
                 feed.getUser().getNickname(),
-                feed.getUser().getProfileImageUrl(),
+                presignUrl(feed.getUser().getProfileImageUrl()),
                 vr.getResultId(),
                 presignUrl(vr.getGeneratedImageUrl()),
                 vr.getPhrase(),
@@ -394,7 +394,7 @@ public class FeedService {
                 comment.getFeed().getFeedId(),
                 comment.getUser().getUserId(),
                 comment.getUser().getNickname(),
-                comment.getUser().getProfileImageUrl(),
+                presignUrl(comment.getUser().getProfileImageUrl()),
                 parentCommentId,
                 comment.getContent(),
                 likeCount,
@@ -421,7 +421,7 @@ public class FeedService {
                 comment.getFeed().getFeedId(),
                 comment.getUser().getUserId(),
                 comment.getUser().getNickname(),
-                comment.getUser().getProfileImageUrl(),
+                presignUrl(comment.getUser().getProfileImageUrl()),
                 null,
                 comment.getContent(),
                 likeCount,
