@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -121,6 +122,27 @@ public class FeedService {
 
         return PageResponse.of(responses, pageRequest.getEffectiveSize(),
                 r -> String.valueOf(r.feedId()));
+    }
+
+    // ── 비슷한 무드 추천 ──
+
+    public List<SimilarFeedResponse> getSimilarFeeds(Long feedId, int limit) {
+        findFeed(feedId);
+
+        List<Object[]> rows = feedRepository.findSimilarFeeds(feedId, PageRequest.of(0, limit));
+
+        return rows.stream().map(row -> new SimilarFeedResponse(
+                ((Number) row[0]).longValue(),       // feed_id
+                ((Number) row[6]).longValue(),       // result_id
+                presignUrl((String) row[7]),         // generated_image_url
+                (String) row[8],                     // phrase
+                (String) row[1],                     // caption
+                ((Number) row[3]).longValue(),       // author_id
+                (String) row[4],                     // author_nickname
+                (String) row[5],                     // author_profile_image_url
+                ((Number) row[9]).intValue(),         // similarity_score
+                ((Timestamp) row[2]).toLocalDateTime() // created_at
+        )).toList();
     }
 
     // ── 피드 반응 (토글) — 한 유저 한 피드당 하나의 반응만 가능 ──
