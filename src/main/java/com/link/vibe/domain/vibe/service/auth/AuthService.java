@@ -21,6 +21,7 @@ import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
 import com.link.vibe.global.security.JwtTokenProvider;
 import com.link.vibe.global.security.RefreshTokenService;
+import com.link.vibe.global.service.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,9 +47,14 @@ public class AuthService {
     private final OAuthClientFactory oAuthClientFactory;
     private final EmailVerificationService emailVerificationService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final S3StorageService s3StorageService;
 
     private static final String SOCIAL_SIGNUP_KEY_PREFIX = "social_signup:";
     private static final long SOCIAL_SIGNUP_TTL_MINUTES = 15;
+
+    private String presignUrl(String url) {
+        return url != null ? s3StorageService.toPresignedUrl(url) : null;
+    }
 
     @Transactional
     public TokenResponse signup(SignupRequest request) {
@@ -83,7 +89,7 @@ public class AuthService {
                 savedUser.getUserId(),
                 savedUser.getEmail(),
                 savedUser.getNickname(),
-                savedUser.getProfileImageUrl(),
+                presignUrl(savedUser.getProfileImageUrl()),
                 accessToken,
                 refreshToken
         );
@@ -113,7 +119,7 @@ public class AuthService {
                 user.getUserId(),
                 user.getEmail(),
                 user.getNickname(),
-                user.getProfileImageUrl(),
+                presignUrl(user.getProfileImageUrl()),
                 accessToken,
                 refreshToken
         );
@@ -159,7 +165,7 @@ public class AuthService {
                 user.getUserId(),
                 user.getEmail(),
                 user.getNickname(),
-                user.getProfileImageUrl(),
+                presignUrl(user.getProfileImageUrl()),
                 newAccessToken,
                 newRefreshToken
         );
@@ -242,7 +248,7 @@ public class AuthService {
                 user.getUserId(),
                 user.getEmail(),
                 user.getNickname(),
-                user.getProfileImageUrl(),
+                presignUrl(user.getProfileImageUrl()),
                 accessToken,
                 refreshToken,
                 false,
@@ -336,7 +342,7 @@ public class AuthService {
                 savedUser.getUserId(),
                 savedUser.getEmail(),
                 savedUser.getNickname(),
-                savedUser.getProfileImageUrl(),
+                presignUrl(savedUser.getProfileImageUrl()),
                 accessToken,
                 refreshToken
         );

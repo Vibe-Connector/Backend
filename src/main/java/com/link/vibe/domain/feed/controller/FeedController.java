@@ -182,6 +182,31 @@ public class FeedController {
         return ApiResponse.ok(feedService.getUserFeeds(userId, currentUserId, pageRequest));
     }
 
+    // ── 비슷한 무드 추천 ──
+
+    @Operation(
+            summary = "비슷한 무드 추천",
+            description = """
+                    현재 피드와 비슷한 무드(옵션 매칭)의 공개 피드를 추천합니다.
+
+                    유사도는 mood keyword 겹침 수 × 2 + 시간/날씨/장소/동반자 일치 여부로 계산됩니다.
+
+                    **인증 선택:** 비인증 시에도 조회 가능합니다.
+
+                    **에러:**
+                    - 404 (FEED_001): 피드를 찾을 수 없음
+                    """)
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "피드를 찾을 수 없음")
+    })
+    @GetMapping("/api/v1/feeds/{feedId}/similar")
+    public ApiResponse<java.util.List<SimilarFeedResponse>> getSimilarFeeds(
+            @Parameter(description = "피드 ID", example = "1") @PathVariable Long feedId,
+            @Parameter(description = "추천 개수", example = "10") @RequestParam(defaultValue = "10") int limit) {
+        return ApiResponse.ok(feedService.getSimilarFeeds(feedId, limit));
+    }
+
     // ── 피드 반응 (토글) ──
 
     @Operation(

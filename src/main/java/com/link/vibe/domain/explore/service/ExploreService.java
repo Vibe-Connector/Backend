@@ -97,7 +97,7 @@ public class ExploreService {
             caption,
             authorId,
             authorNickname,
-            authorProfileImageUrl,
+            authorProfileImageUrl != null ? s3StorageService.toPresignedUrl(authorProfileImageUrl) : null,
             viewCount,
             reactionCount,
             commentCount,

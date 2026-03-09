@@ -87,6 +87,50 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
         @Param("currentUserId") Long currentUserId,
         Pageable pageable);
 
+    // ── Strategy D: 비슷한 무드 추천 (PostgreSQL 옵션 매칭) ──
+
+    @Query(value =
+        "WITH src AS ( " +
+        "    SELECT vp.mood_keyword_ids, vp.time_id, vp.weather_id, vp.place_id, vp.companion_id " +
+        "    FROM feeds sf " +
+        "    JOIN vibe_results svr ON svr.result_id = sf.result_id " +
+        "    JOIN vibe_sessions svs ON svs.session_id = svr.session_id " +
+        "    JOIN vibe_prompts vp ON vp.session_id = svs.session_id " +
+        "    WHERE sf.feed_id = :feedId " +
+        "), " +
+        "scored AS ( " +
+        "    SELECT f.feed_id, f.caption, f.created_at, " +
+        "           u.user_id AS author_id, u.nickname AS author_nickname, u.profile_image_url, " +
+        "           vr.result_id, vr.generated_image_url, vr.phrase, " +
+        "           ( " +
+        "             COALESCE( " +
+        "               (SELECT COUNT(*) " +
+        "                FROM jsonb_array_elements_text(COALESCE(tvp.mood_keyword_ids, '[]'::jsonb)) AS mk(val) " +
+        "                WHERE mk.val IN ( " +
+        "                  SELECT jsonb_array_elements_text(COALESCE(src.mood_keyword_ids, '[]'::jsonb)) " +
+        "                )), 0 " +
+        "             ) * 2 " +
+        "             + CASE WHEN tvp.time_id = src.time_id AND tvp.time_id IS NOT NULL THEN 1 ELSE 0 END " +
+        "             + CASE WHEN tvp.weather_id = src.weather_id AND tvp.weather_id IS NOT NULL THEN 1 ELSE 0 END " +
+        "             + CASE WHEN tvp.place_id = src.place_id AND tvp.place_id IS NOT NULL THEN 1 ELSE 0 END " +
+        "             + CASE WHEN tvp.companion_id = src.companion_id AND tvp.companion_id IS NOT NULL THEN 1 ELSE 0 END " +
+        "           ) AS similarity_score " +
+        "    FROM feeds f " +
+        "    JOIN users u ON u.user_id = f.user_id " +
+        "    JOIN vibe_results vr ON vr.result_id = f.result_id " +
+        "    JOIN vibe_sessions vs ON vs.session_id = vr.session_id " +
+        "    JOIN vibe_prompts tvp ON tvp.session_id = vs.session_id " +
+        "    CROSS JOIN src " +
+        "    WHERE f.is_public = true " +
+        "      AND f.deleted_at IS NULL " +
+        "      AND f.feed_id <> :feedId " +
+        ") " +
+        "SELECT * FROM scored " +
+        "WHERE similarity_score > 0 " +
+        "ORDER BY similarity_score DESC, feed_id DESC",
+        nativeQuery = true)
+    List<Object[]> findSimilarFeeds(@Param("feedId") Long feedId, Pageable pageable);
+
     @Query(value =
         "SELECT f.feed_id, f.caption, f.view_count, f.created_at, " +
         "       u.user_id AS author_id, u.nickname AS author_nickname, u.profile_image_url, " +

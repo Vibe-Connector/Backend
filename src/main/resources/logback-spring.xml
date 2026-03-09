@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 공통 포맷 -->
+    <property name="LOG_PATTERN"
+              value="%d{HH:mm:ss.SSS} %-5level %-40.40logger{39} %msg%n"/>
+
+    <!-- 콘솔 Appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 파일 Appender (prod 전용) -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/vibe-link.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/vibe-link.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ==================== dev 프로파일 ==================== -->
+    <springProfile name="dev">
+        <!-- Hibernate SQL 원문 표시 -->
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <!-- SQL 바인딩 파라미터 표시 -->
+        <logger name="org.hibernate.orm.jdbc.bind" level="TRACE"/>
+        <!-- 우리 코드 전체 DEBUG -->
+        <logger name="com.link.vibe" level="DEBUG"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- ==================== prod 프로파일 ==================== -->
+    <springProfile name="prod">
+        <!-- Hibernate 로그 최소화 -->
+        <logger name="org.hibernate" level="WARN"/>
+        <!-- Spring 프레임워크 WARN 이상 -->
+        <logger name="org.springframework" level="WARN"/>
+        <!-- 우리 코드 INFO 이상만 -->
+        <logger name="com.link.vibe" level="INFO"/>
+
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- ==================== 기본 (프로파일 미지정) ==================== -->
+    <springProfile name="default">
+        <logger name="com.link.vibe" level="DEBUG"/>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>

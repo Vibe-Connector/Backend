@@ -11,6 +11,7 @@ import com.link.vibe.global.common.PageResponse;
 import com.link.vibe.global.event.FollowEvent;
 import com.link.vibe.global.exception.BusinessException;
 import com.link.vibe.global.exception.ErrorCode;
+import com.link.vibe.global.service.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +30,7 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final S3StorageService s3StorageService;
 
     @Transactional
     public FollowResponse follow(Long followerId, Long followingId) {
@@ -97,7 +99,7 @@ public class FollowService {
                 .collect(Collectors.toList()));
 
         List<FollowUserResponse> content = follows.stream()
-                .map(f -> FollowUserResponse.of(f.getFollower(), myFollowingIds.contains(f.getFollower().getUserId())))
+                .map(f -> toFollowUserResponse(f.getFollower(), myFollowingIds.contains(f.getFollower().getUserId())))
                 .collect(Collectors.toList());
 
         return PageResponse.of(content, pageRequest.getEffectiveSize(),
@@ -121,11 +123,17 @@ public class FollowService {
                 .collect(Collectors.toList()));
 
         List<FollowUserResponse> content = follows.stream()
-                .map(f -> FollowUserResponse.of(f.getFollowing(), myFollowingIds.contains(f.getFollowing().getUserId())))
+                .map(f -> toFollowUserResponse(f.getFollowing(), myFollowingIds.contains(f.getFollowing().getUserId())))
                 .collect(Collectors.toList());
 
         return PageResponse.of(content, pageRequest.getEffectiveSize(),
                 item -> String.valueOf(follows.get(content.indexOf(item)).getFollowId()));
+    }
+
+    private FollowUserResponse toFollowUserResponse(User user, boolean following) {
+        String presignedUrl = user.getProfileImageUrl() != null
+                ? s3StorageService.toPresignedUrl(user.getProfileImageUrl()) : null;
+        return new FollowUserResponse(user.getUserId(), user.getNickname(), presignedUrl, following);
     }
 
     private Set<Long> getMyFollowingIds(Long currentUserId, List<Long> userIds) {
