@@ -71,7 +71,7 @@ public class ItemService {
                 detail.getVoteCount(),
                 detail.getPosterPath(),
                 parseJsonArray(detail.getGenres(), new TypeReference<>() {}),
-                parseJsonArray(detail.getCastInfo(), new TypeReference<>() {}),
+                parseCastInfo(detail.getCastInfo()),
                 detail.getContentType()
         );
     }
@@ -95,7 +95,7 @@ public class ItemService {
                 item.getImageUrl(),
                 item.getExternalLink(),
                 item.getExternalService(),
-                parseJsonArray(detail.getArtists(), new TypeReference<>() {}),
+                parseArtists(detail.getArtists()),
                 detail.getAlbumName(),
                 detail.getAlbumCoverUrl(),
                 detail.getTrackDurationMs(),
@@ -231,6 +231,46 @@ public class ItemService {
         } catch (Exception e) {
             log.warn("JSON 배열 파싱 실패: {}", e.getMessage());
             return Collections.emptyList();
+        }
+    }
+
+    /**
+     * artists JSON 파싱 — [{"name":"IU","role":"main"}] 또는 ["IU"] 둘 다 지원
+     */
+    private List<MusicDetailResponse.ArtistInfo> parseArtists(String json) {
+        if (json == null || json.isBlank()) return Collections.emptyList();
+        try {
+            return objectMapper.readValue(json, new TypeReference<>() {});
+        } catch (Exception e) {
+            try {
+                List<String> names = objectMapper.readValue(json, new TypeReference<>() {});
+                return names.stream()
+                        .map(name -> new MusicDetailResponse.ArtistInfo(name, null))
+                        .toList();
+            } catch (Exception ex) {
+                log.warn("아티스트 JSON 파싱 실패: {}", e.getMessage());
+                return Collections.emptyList();
+            }
+        }
+    }
+
+    /**
+     * castInfo JSON 파싱 — [{"name":"Actor","role":"Hero"}] 또는 ["Actor"] 둘 다 지원
+     */
+    private List<MovieDetailResponse.CastInfo> parseCastInfo(String json) {
+        if (json == null || json.isBlank()) return Collections.emptyList();
+        try {
+            return objectMapper.readValue(json, new TypeReference<>() {});
+        } catch (Exception e) {
+            try {
+                List<String> names = objectMapper.readValue(json, new TypeReference<>() {});
+                return names.stream()
+                        .map(name -> new MovieDetailResponse.CastInfo(name, null))
+                        .toList();
+            } catch (Exception ex) {
+                log.warn("출연진 JSON 파싱 실패: {}", e.getMessage());
+                return Collections.emptyList();
+            }
         }
     }
 }
