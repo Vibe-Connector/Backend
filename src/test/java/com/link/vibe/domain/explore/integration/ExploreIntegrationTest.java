@@ -199,10 +199,10 @@ class ExploreIntegrationTest {
         }
 
         @Test
-        @DisplayName("작성자 본인 댓글은 댓글수에 포함되지 않는다")
-        void excludesSelfComments() throws Exception {
+        @DisplayName("작성자 본인 댓글도 댓글수에 포함된다 (답글 포함 전체 집계)")
+        void includesSelfComments() throws Exception {
             Feed feed = createPublicFeed(author, "테스트", 10);
-            addComment(feed, author, "본인 댓글");       // 본인 → 제외
+            addComment(feed, author, "본인 댓글");       // 본인 → 포함
             addComment(feed, otherUser, "타인 댓글");     // 타인 → 포함
             flushAndClear();
 
@@ -210,7 +210,7 @@ class ExploreIntegrationTest {
                     .param("period", "MONTH")
                     .param("size", "20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content[0].commentCount").value(1));
+                    .andExpect(jsonPath("$.data.content[0].commentCount").value(2));
         }
 
         @Test
