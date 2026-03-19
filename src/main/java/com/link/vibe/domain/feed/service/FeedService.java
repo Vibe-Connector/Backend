@@ -258,6 +258,13 @@ public class FeedService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
+        // 최상위 댓글 삭제 시 답글도 함께 소프트 삭제 (카운트 정합성 유지)
+        if (!comment.isReply()) {
+            feedCommentRepository
+                    .findByParentCommentCommentIdOrderByCommentIdAsc(comment.getCommentId())
+                    .forEach(FeedComment::softDelete);
+        }
+
         comment.softDelete();
     }
 

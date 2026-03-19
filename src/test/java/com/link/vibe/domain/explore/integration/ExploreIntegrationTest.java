@@ -119,8 +119,12 @@ class ExploreIntegrationTest {
         }
     }
 
-    private void addComment(Feed feed, User commenter, String content) {
-        feedCommentRepository.save(FeedComment.create(feed, commenter, null, content));
+    private FeedComment addComment(Feed feed, User commenter, String content) {
+        return feedCommentRepository.save(FeedComment.create(feed, commenter, null, content));
+    }
+
+    private void addReply(Feed feed, User commenter, FeedComment parent, String content) {
+        feedCommentRepository.save(FeedComment.create(feed, commenter, parent, content));
     }
 
     private void flushAndClear() {
@@ -211,6 +215,53 @@ class ExploreIntegrationTest {
                     .param("size", "20"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content[0].commentCount").value(2));
+        }
+
+        @Test
+        @DisplayName("답글도 댓글수에 포함된다")
+        void includesReplies() throws Exception {
+            Feed feed = createPublicFeed(author, "답글테스트", 10);
+            FeedComment parent = addComment(feed, otherUser, "부모 댓글");
+            addReply(feed, author, parent, "답글1");
+            addReply(feed, otherUser, parent, "답글2");
+            flushAndClear();
+
+            mockMvc.perform(get("/api/v1/explore/vibes")
+                    .param("period", "MONTH")
+                    .param("size", "20"))
+                    .andExpect(status().isOk())
+                    // 부모 1 + 답글 2 = 3
+                    .andExpect(jsonPath("$.data.content[0].commentCount").value(3));
+        }
+
+        @Test
+        @DisplayName("부모 댓글 삭제 시 달려있던 답글도 댓글수에서 제외된다")
+        void deletedParentCommentCascadesRepliesFromCount() throws Exception {
+            Feed feed = createPublicFeed(author, "cascade테스트", 10);
+            FeedComment parent = addComment(feed, otherUser, "부모 댓글");
+            addReply(feed, author, parent, "답글1");
+            addReply(feed, otherUser, parent, "답글2");
+            flushAndClear();
+
+            // 삭제 전: 부모 1 + 답글 2 = 3
+            mockMvc.perform(get("/api/v1/explore/vibes")
+                    .param("period", "MONTH")
+                    .param("size", "20"))
+                    .andExpect(jsonPath("$.data.content[0].commentCount").value(3));
+
+            // 부모 댓글 소프트 삭제 (서비스 레이어를 통해 cascade 적용)
+            FeedComment managedParent = feedCommentRepository.findById(parent.getCommentId()).orElseThrow();
+            feedCommentRepository.findByParentCommentCommentIdOrderByCommentIdAsc(managedParent.getCommentId())
+                    .forEach(com.link.vibe.domain.feed.entity.FeedComment::softDelete);
+            managedParent.softDelete();
+            flushAndClear();
+
+            // 삭제 후: 부모 + 답글 모두 deleted_at 설정 → commentCount = 0
+            mockMvc.perform(get("/api/v1/explore/vibes")
+                    .param("period", "MONTH")
+                    .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content[0].commentCount").value(0));
         }
 
         @Test
