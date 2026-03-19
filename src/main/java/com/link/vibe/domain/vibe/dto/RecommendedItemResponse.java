@@ -15,5 +15,12 @@ public record RecommendedItemResponse(
         @Schema(description = "외부 링크") String externalLink,
         @Schema(description = "외부 서비스") String externalService,
         @Schema(description = "매칭 점수 (0~1)") BigDecimal matchScore,
-        @Schema(description = "추천 이유") String recommendReason
+        @Schema(description = "추천 이유") String recommendReason,
+
+        // ── 음악 전용 필드 (music 카테고리일 때만 값이 있음) ──
+        @Schema(description = "앨범 커버 URL (음악만)") String albumCoverUrl,
+        @Schema(description = "미리듣기 URL (음악만)") String previewUrl,
+        @Schema(description = "Spotify URI (음악만)") String spotifyUri,
+        @Schema(description = "ISRC (음악만)") String isrc,
+        @Schema(description = "MusicBrainz ID (음악만)") String musicbrainzId
 ) {}

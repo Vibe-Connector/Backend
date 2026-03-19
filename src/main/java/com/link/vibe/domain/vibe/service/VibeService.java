@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.link.vibe.domain.feed.repository.FeedRepository;
+import com.link.vibe.domain.item.entity.MusicDetail;
+import com.link.vibe.domain.item.repository.MusicDetailRepository;
 import com.link.vibe.domain.option.entity.*;
 import com.link.vibe.domain.option.repository.*;
 import com.link.vibe.domain.item.repository.ItemTranslationRepository;
@@ -39,6 +41,7 @@ public class VibeService {
     private final VibeResultRepository vibeResultRepository;
     private final VibeItemRepository vibeItemRepository;
     private final ItemTranslationRepository itemTranslationRepository;
+    private final MusicDetailRepository musicDetailRepository;
     private final MoodKeywordRepository moodKeywordRepository;
     private final TimeOptionRepository timeOptionRepository;
     private final WeatherOptionRepository weatherOptionRepository;
@@ -269,22 +272,54 @@ public class VibeService {
                         vi -> vi.getItem().getCategory().getCategoryKey(),
                         LinkedHashMap::new,
                         Collectors.mapping(vi -> {
+                            // 번역된 이름 → 기본 언어(한국어) 번역 → itemKey 순서로 폴백
                             String itemName = itemTranslationRepository
                                     .findByItemItemIdAndLanguageLanguageId(vi.getItem().getItemId(), languageId)
                                     .map(t -> t.getItemValue())
-                                    .orElse(vi.getItem().getItemKey());
+                                    .orElse(null);
+                            if (itemName == null) {
+                                itemName = itemTranslationRepository
+                                        .findByItemItemIdAndLanguageLanguageId(vi.getItem().getItemId(), 1L)
+                                        .map(t -> t.getItemValue())
+                                        .orElse(vi.getItem().getItemKey());
+                            }
+
+                            // 음악 카테고리인 경우 MusicDetail 데이터 포함
+                            String albumCoverUrl = null;
+                            String previewUrl = null;
+                            String spotifyUri = null;
+                            String isrc = null;
+                            String musicbrainzId = null;
+                            String categoryKey = vi.getItem().getCategory().getCategoryKey();
+
+                            if ("music".equals(categoryKey)) {
+                                Optional<MusicDetail> musicDetailOpt = musicDetailRepository.findByItemId(vi.getItem().getItemId());
+                                if (musicDetailOpt.isPresent()) {
+                                    MusicDetail md = musicDetailOpt.get();
+                                    albumCoverUrl = md.getAlbumCoverUrl();
+                                    previewUrl = md.getPreviewUrl();
+                                    spotifyUri = md.getSpotifyUri();
+                                    isrc = md.getIsrc();
+                                    musicbrainzId = md.getMusicbrainzId();
+                                }
+                            }
 
                             return new RecommendedItemResponse(
                                     vi.getItem().getItemId(),
                                     vi.getItem().getItemKey(),
                                     itemName,
-                                    vi.getItem().getCategory().getCategoryKey(),
+                                    categoryKey,
                                     vi.getItem().getBrand(),
                                     vi.getItem().getImageUrl(),
                                     vi.getItem().getExternalLink(),
                                     vi.getItem().getExternalService(),
                                     vi.getMatchScore(),
-                                    vi.getRecommendReason()
+                                    vi.getRecommendReason(),
+                                    albumCoverUrl,
+                                    previewUrl,
+                                    spotifyUri,
+                                    isrc,
+                                    musicbrainzId
                             );
                         }, Collectors.toList())
                 ));
