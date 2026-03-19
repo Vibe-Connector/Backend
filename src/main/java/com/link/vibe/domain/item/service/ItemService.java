@@ -95,7 +95,7 @@ public class ItemService {
                 item.getImageUrl(),
                 item.getExternalLink(),
                 item.getExternalService(),
-                parseJsonArray(detail.getArtists(), new TypeReference<>() {}),
+                parseArtists(detail.getArtists()),
                 detail.getAlbumName(),
                 detail.getAlbumCoverUrl(),
                 detail.getTrackDurationMs(),
@@ -103,7 +103,9 @@ public class ItemService {
                 parseJsonArray(detail.getGenres(), new TypeReference<>() {}),
                 detail.getPreviewUrl(),
                 detail.getSpotifyUri(),
-                detail.getContentType()
+                detail.getContentType(),
+                detail.getIsrc(),
+                detail.getMusicbrainzId()
         );
     }
 
@@ -212,6 +214,25 @@ public class ItemService {
                 .findByCategoryCategoryIdAndLanguageLanguageId(categoryId, languageId)
                 .map(t -> t.getCategoryValue())
                 .orElse(null);
+    }
+
+    private List<MusicDetailResponse.ArtistInfo> parseArtists(String json) {
+        if (json == null || json.isBlank()) return Collections.emptyList();
+        try {
+            // 먼저 ArtistInfo 객체 배열로 파싱 시도: [{"name":"...","role":"..."}]
+            return objectMapper.readValue(json, new TypeReference<List<MusicDetailResponse.ArtistInfo>>() {});
+        } catch (Exception e) {
+            try {
+                // 실패 시 문자열 배열로 파싱: ["Artist Name"]
+                List<String> names = objectMapper.readValue(json, new TypeReference<List<String>>() {});
+                return names.stream()
+                        .map(name -> new MusicDetailResponse.ArtistInfo(name, null))
+                        .toList();
+            } catch (Exception e2) {
+                log.warn("아티스트 JSON 파싱 실패: {}", e2.getMessage());
+                return Collections.emptyList();
+            }
+        }
     }
 
     private <T> T parseJson(String json, TypeReference<T> typeRef) {
