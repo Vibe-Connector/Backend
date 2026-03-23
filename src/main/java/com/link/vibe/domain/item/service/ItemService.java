@@ -255,25 +255,25 @@ public class ItemService {
         }
     }
 
-    /**
-     * artists JSON 파싱 — [{"name":"IU","role":"main"}] 또는 ["IU"] 둘 다 지원
-     */
-    private List<MusicDetailResponse.ArtistInfo> parseArtists(String json) {
-        if (json == null || json.isBlank()) return Collections.emptyList();
-        try {
-            return objectMapper.readValue(json, new TypeReference<>() {});
-        } catch (Exception e) {
-            try {
-                List<String> names = objectMapper.readValue(json, new TypeReference<>() {});
-                return names.stream()
-                        .map(name -> new MusicDetailResponse.ArtistInfo(name, null))
-                        .toList();
-            } catch (Exception ex) {
-                log.warn("아티스트 JSON 파싱 실패: {}", e.getMessage());
-                return Collections.emptyList();
-            }
-        }
-    }
+    // /** -> build 에러나서 주석처리 함
+    //  * artists JSON 파싱 — [{"name":"IU","role":"main"}] 또는 ["IU"] 둘 다 지원
+    //  */
+    // private List<MusicDetailResponse.ArtistInfo> parseArtists(String json) {
+    //     if (json == null || json.isBlank()) return Collections.emptyList();
+    //     try {
+    //         return objectMapper.readValue(json, new TypeReference<>() {});
+    //     } catch (Exception e) {
+    //         try {
+    //             List<String> names = objectMapper.readValue(json, new TypeReference<>() {});
+    //             return names.stream()
+    //                     .map(name -> new MusicDetailResponse.ArtistInfo(name, null))
+    //                     .toList();
+    //         } catch (Exception ex) {
+    //             log.warn("아티스트 JSON 파싱 실패: {}", e.getMessage());
+    //             return Collections.emptyList();
+    //         }
+    //     }
+    // }
 
     /**
      * castInfo JSON 파싱 — [{"name":"Actor","role":"Hero"}] 또는 ["Actor"] 둘 다 지원
