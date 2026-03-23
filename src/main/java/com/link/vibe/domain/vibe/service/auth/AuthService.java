@@ -90,6 +90,7 @@ public class AuthService {
                 savedUser.getEmail(),
                 savedUser.getNickname(),
                 presignUrl(savedUser.getProfileImageUrl()),
+                savedUser.getPreferredLanguageId(),
                 accessToken,
                 refreshToken
         );
@@ -120,6 +121,7 @@ public class AuthService {
                 user.getEmail(),
                 user.getNickname(),
                 presignUrl(user.getProfileImageUrl()),
+                user.getPreferredLanguageId(),
                 accessToken,
                 refreshToken
         );
@@ -166,6 +168,7 @@ public class AuthService {
                 user.getEmail(),
                 user.getNickname(),
                 presignUrl(user.getProfileImageUrl()),
+                user.getPreferredLanguageId(),
                 newAccessToken,
                 newRefreshToken
         );
@@ -343,6 +346,7 @@ public class AuthService {
                 savedUser.getEmail(),
                 savedUser.getNickname(),
                 presignUrl(savedUser.getProfileImageUrl()),
+                savedUser.getPreferredLanguageId(),
                 accessToken,
                 refreshToken
         );

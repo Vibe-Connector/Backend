@@ -17,6 +17,9 @@ public record TokenResponse(
         @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
         String profileImageUrl,
 
+        @Schema(description = "선호 언어 ID (1=ko, 2=en, 3=ja, 4=zh)", example = "1")
+        Long preferredLanguageId,
+
         @Schema(description = "Access Token (Bearer)", example = "eyJhbGciOiJIUzI1NiJ9...")
         String accessToken,
 
