@@ -27,7 +27,9 @@ public record MusicDetailResponse(
         @Schema(description = "장르") List<String> genres,
         @Schema(description = "미리듣기 URL") String previewUrl,
         @Schema(description = "Spotify URI") String spotifyUri,
-        @Schema(description = "콘텐츠 타입 (TRACK/ALBUM/PLAYLIST)") String contentType
+        @Schema(description = "콘텐츠 타입 (TRACK/ALBUM/PLAYLIST)") String contentType,
+        @Schema(description = "ISRC") String isrc,
+        @Schema(description = "MusicBrainz ID") String musicbrainzId
 ) {
     public record ArtistInfo(String name, String role) {}
 }

@@ -2,8 +2,10 @@ package com.link.vibe.domain.vibe.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.link.vibe.domain.item.entity.MusicDetail;
 import com.link.vibe.domain.item.repository.ItemRepository;
 import com.link.vibe.domain.item.repository.ItemTranslationRepository;
+import com.link.vibe.domain.item.repository.MusicDetailRepository;
 import com.link.vibe.domain.option.entity.*;
 import com.link.vibe.domain.option.repository.*;
 import com.link.vibe.domain.vibe.dto.*;
@@ -44,6 +46,7 @@ public class VibePromptService {
     private final PlaceOptionRepository placeOptionRepository;
     private final CompanionOptionRepository companionOptionRepository;
     private final ItemTranslationRepository itemTranslationRepository;
+    private final MusicDetailRepository musicDetailRepository;
     private final AIServerClient aiServerClient;
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
@@ -184,18 +187,50 @@ public class VibePromptService {
                 .map(catRec -> new CategoryRecommendation(
                         catRec.categoryKey(),
                         catRec.items().stream()
-                                .map(item -> new RecommendedItemResponse(
-                                        (long) item.itemId(),
-                                        item.itemKey(),
-                                        getItemName((long) item.itemId(), languageId),
-                                        catRec.categoryKey(),
-                                        item.brand(),
-                                        item.imageUrl(),
-                                        item.externalLink(),
-                                        item.externalService(),
-                                        BigDecimal.valueOf(item.relevanceScore()),
-                                        item.reason()
-                                ))
+                                .map(item -> {
+                                    // 음악 카테고리인 경우 MusicDetail 데이터 포함
+                                    String albumCoverUrl = null;
+                                    String previewUrl = null;
+                                    String spotifyUri = null;
+                                    String isrc = null;
+                                    String musicbrainzId = null;
+
+                                    if ("music".equals(catRec.categoryKey())) {
+                                        Optional<MusicDetail> musicDetailOpt = musicDetailRepository.findByItemId((long) item.itemId());
+                                        if (musicDetailOpt.isPresent()) {
+                                            MusicDetail md = musicDetailOpt.get();
+                                            albumCoverUrl = md.getAlbumCoverUrl();
+                                            previewUrl = md.getPreviewUrl();
+                                            spotifyUri = md.getSpotifyUri();
+                                            isrc = md.getIsrc();
+                                            musicbrainzId = md.getMusicbrainzId();
+                                        }
+                                    }
+
+                                    // 번역된 이름 → AI서버 name → itemKey 순서로 폴백
+                                    String resolvedName = getItemName((long) item.itemId(), languageId);
+                                    if (resolvedName == null) {
+                                        resolvedName = item.name();
+                                    }
+
+                                    return new RecommendedItemResponse(
+                                            (long) item.itemId(),
+                                            item.itemKey(),
+                                            resolvedName,
+                                            catRec.categoryKey(),
+                                            item.brand(),
+                                            item.imageUrl(),
+                                            item.externalLink(),
+                                            item.externalService(),
+                                            BigDecimal.valueOf(item.relevanceScore()),
+                                            item.reason(),
+                                            albumCoverUrl,
+                                            previewUrl,
+                                            spotifyUri,
+                                            isrc,
+                                            musicbrainzId
+                                    );
+                                })
                                 .toList()
                 ))
                 .toList();
