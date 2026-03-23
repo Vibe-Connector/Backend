@@ -52,6 +52,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/feeds").permitAll()
                         // 탐색 — Public
                         .requestMatchers(HttpMethod.GET, "/api/v1/explore/**").permitAll()
+                        // Spotify 검색 — Public
+                        .requestMatchers(HttpMethod.GET, "/api/v1/spotify/**").permitAll()
                         // Swagger UI — Public
                         .requestMatchers(
                                 "/swagger-ui/**",
