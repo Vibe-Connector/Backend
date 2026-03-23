@@ -579,6 +579,50 @@ class FeedServiceTest {
         }
 
         @Test
+        @DisplayName("최상위 댓글 삭제 시 답글도 함께 소프트 삭제된다")
+        void deleteComment_cascadesToReplies() {
+            // given
+            User user = createTestUser(1L, "testuser");
+            VibeResult vr = createTestVibeResult(10L);
+            Feed feed = createTestFeed(100L, user, vr);
+            FeedComment parent = createTestComment(200L, feed, user, null, "부모 댓글");
+            FeedComment reply = createTestComment(201L, feed, user, parent, "답글");
+
+            given(feedCommentRepository.findById(200L)).willReturn(Optional.of(parent));
+            given(feedCommentRepository.findByParentCommentCommentIdOrderByCommentIdAsc(200L))
+                    .willReturn(List.of(reply));
+
+            // when
+            feedService.deleteComment(1L, 200L);
+
+            // then: 부모 + 답글 모두 소프트 삭제됨
+            assertThat(parent.getDeletedAt()).isNotNull();
+            assertThat(reply.getDeletedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("답글 삭제 시 cascade는 발생하지 않는다")
+        void deleteReply_noCascade() {
+            // given
+            User user = createTestUser(1L, "testuser");
+            VibeResult vr = createTestVibeResult(10L);
+            Feed feed = createTestFeed(100L, user, vr);
+            FeedComment parent = createTestComment(200L, feed, user, null, "부모 댓글");
+            FeedComment reply = createTestComment(201L, feed, user, parent, "답글");
+
+            given(feedCommentRepository.findById(201L)).willReturn(Optional.of(reply));
+
+            // when
+            feedService.deleteComment(1L, 201L);
+
+            // then: 답글만 삭제, findByParentComment 호출 없음
+            assertThat(reply.getDeletedAt()).isNotNull();
+            assertThat(parent.getDeletedAt()).isNull();
+            verify(feedCommentRepository, never())
+                    .findByParentCommentCommentIdOrderByCommentIdAsc(any());
+        }
+
+        @Test
         @DisplayName("피드 소유자도 댓글 작성자도 아닌 사용자가 삭제 시 ACCESS_DENIED")
         void deleteComment_accessDenied() {
             // given

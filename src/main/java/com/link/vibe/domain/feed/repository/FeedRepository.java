@@ -149,11 +149,10 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
         "    FROM feed_reactions GROUP BY feed_id" +
         ") r ON r.feed_id = f.feed_id " +
         "LEFT JOIN (" +
-        "    SELECT fc.feed_id, COUNT(*) AS comment_cnt " +
-        "    FROM feed_comments fc " +
-        "    JOIN feeds ff ON ff.feed_id = fc.feed_id " +
-        "    WHERE fc.user_id <> ff.user_id AND fc.deleted_at IS NULL " +
-        "    GROUP BY fc.feed_id" +
+        "    SELECT feed_id, COUNT(*) AS comment_cnt " +
+        "    FROM feed_comments " +
+        "    WHERE deleted_at IS NULL " +
+        "    GROUP BY feed_id" +
         ") c ON c.feed_id = f.feed_id " +
         "WHERE f.is_public = true " +
         "  AND f.deleted_at IS NULL " +
